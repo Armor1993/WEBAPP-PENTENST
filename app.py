@@ -6,6 +6,7 @@ from wtforms.validators import InputRequired, Email, Length
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secrett!'
@@ -42,7 +43,7 @@ class Scan(db.Model):
 
 
 class Target(db.Model):
-    id = db.Column(db.Integer, db.ForeignKey('scan.id'))
+    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     domain = db.Column(db.String(100), nullable=False)
     status = db.Column(db.Integer, nullable=True)
@@ -141,19 +142,30 @@ def scan_form(scan_id=False):
     query = Scan.query.filter_by(scan_id=scan_id)
     if request.method == 'POST':
         if query:
-            # update form
-            return render_template('scan/form.html', name=current_user.username, scan=query)
+            # update db
+            updict = request.json
+            query.title = updict['title']
+            query.date_created = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            query.user_id = current_user.id
+            query.target_id = updict['target_id']
+            db.session.commit()
         else:
             # TODO
             # create
+            newscan = Scan()
+            newdict = request.json
+            newscan.title = newdict['title']
+            newscan.date_created = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            newscan.target_id = newdict['target_id']
+            db.session.add(newscan)
+            db.session.commit()
+            scan_id = newscan.id
             # call the function to create and bind the scan processes id to the scan processes
             # get new scan object created after scan creation
-            created_query = Scan.query.filter_by(scan_id=scan_id)
             # return the page with the new creation data
-            return render_template('scan/form.html', name=current_user.username, scan=created_query)
-    else:
-        if query:
-            return render_template('scan/form.html', name=current_user.username, scan=query)
+
+    newquery = Scan.query.filter_by(scan_id=scan_id)
+    return render_template('scan/form.html', name=current_user.username, scan=newquery)
 
 
 @app.route('/scan/<int:scan_id>/report')
@@ -187,16 +199,22 @@ def target_form(target_id=False):
         if target_id is False:
             # TODO
             # create
+            new_target = Target()
+            newdict = request.json
+            new_target.domain = newdict['domain']
+            new_target.user_id = current_user.id
+            db.session.add(new_target)
+            db.session.commit()
+            target_id = new_target.id
             # create the new target by adding to db
             # get net targt obj
-            target_obj = Target.query.filter_by(target_id=target_id)
-            return render_template('target/form.html', name=current_user.username, target=target_obj)
-            pass
         else:
             # update
-            # TODO DOUBT IF NO TARGET ID THEN WHAT AM I UPDATING??
-            # veiw the page with updated content from db
-            return render_template('target/form.html', name=current_user.username, target=query)
+            updict = request.json
+            query.title = updict['title']
+            query.user_id = current_user.id
+            query.domain = updict['domain']
+            db.session.commit()
     else:
         if query:
             # view
@@ -205,9 +223,16 @@ def target_form(target_id=False):
             # TODO
             # create
             # create the new target by adding to db
-            # get net target obj
-            target_obj = Target.query.filter_by(target_id=target_id)
-            return render_template('target/form.html', name=current_user.username, target=target_obj)
+            # get new target obj
+            new_target = Target()
+            newdict = request.json
+            new_target.domain = newdict['domain']
+            new_target.user_id = current_user.id
+            db.session.add(new_target)
+            db.session.commit()
+            target_id = new_target.id
+
+    return render_template('target/form.html', name=current_user.username, target=target_id)
 
 
 @app.route('/target/<int:target_id>/authorize')
