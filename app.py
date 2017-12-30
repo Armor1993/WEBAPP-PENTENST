@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secrett!'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/lindachouikhi/flask_app/database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///database.db"
 bootstrap = Bootstrap(app)
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -51,7 +51,10 @@ class RegisterForm(FlaskForm):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    if (user.is_authenticated()):
+        return redirect(url_for('dashboard'))
+    else:
+        return redirect(url_for('login'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -91,10 +94,74 @@ def dashboard():
     return render_template('dashboard.html', name=current_user.username)
 
 
-@app.route('/scans')
+@app.route('/scan/list')
 @login_required
 def scans():
-    return render_template('scans.html', name=current_user.username)
+    return render_template('scan/list.html', name=current_user.username)
+
+
+@app.route('/scan/<int:scan_id>')
+@app.route('/scan')
+@login_required
+def scan_form(scan_id=False):
+    # if request method is post
+        # pobably create or update
+            # if scan_id exists:
+                # update
+            # else:
+                # create
+    # else:
+        # if scan if exists:
+            # view
+        # else:
+            # create
+    return render_template('scan/form.html', name=current_user.username)
+
+
+@app.route('/scan/<int:scan_id>/report')
+@login_required
+def scan_report(scan_id=False):
+    # if scan_id false:
+        # redirect to scan/list
+    # get scan process outputs
+    pass
+
+
+@app.route('/target/list')
+@login_required
+def targets():
+    return render_template('target/list.html', name=current_user.username)
+
+
+@app.route('/target/<int:target_id>')
+@app.route('/target')
+@login_required
+def target_form(target_id=False):
+    # if request method is post
+    # pobably create or update
+    # if target_id exists:
+    # update
+    # else:
+    # create
+    # else:
+    # if target if exists:
+    # view
+    # else:
+    # create
+    return render_template('target/form.html', name=current_user.username)
+
+
+
+@app.route('/target/<int:target_id>/authorize')
+@login_required
+def target_authorize(target_id=False):
+    # if target_id false:
+    # redirect to target/list
+    # get the target from database to show location of auth key
+    # if request method is post
+    # authorize request
+    # else:
+    return render_template('target/authorize.html', name=current_user.username)
 
 
 @app.route('/webManagement')
