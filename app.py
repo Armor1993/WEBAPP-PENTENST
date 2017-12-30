@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, request
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, IntegerField, BooleanField
@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secrett!'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
-app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///database.db"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////database.db'
 bootstrap = Bootstrap(app)
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -20,13 +20,45 @@ login_manager.login_view = 'login'
 
 
 class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    firstname = db.Column(db.String(15))
-    lastname = db.Column(db.String(15))
-    companyname = db.Column(db.String(20))
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    firstname = db.Column(db.String(15), nullable=False)
+    lastname = db.Column(db.String(15), nullable=True)
+    companyname = db.Column(db.String(20), nullable=False)
     username = db.Column(db.String(15), unique=True)
     email = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(80))
+
+
+class Scan(db.Model):
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    date_created = db.Column(db.DateTime, nullable=False)
+    date_started = db.Column(db.DateTime, nullable=True)
+    date_completed = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.Integer, nullable=False)
+    progress = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    target_id = db.Column(db.Integer, db.ForeignKey('target.id'), nullable=False)
+
+
+class Target(db.Model):
+    id = db.Column(db.Integer, db.ForeignKey('scan.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    domain = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.Integer, nullable=True)
+    key = db.Column(db.Text, nullable=False)
+
+
+class Process(db.Model):
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    scan_id = db.Column(db.Integer, db.ForeignKey('scan.id'))
+    process = db.Column(db.String(10), nullable=False)
+    status = db.Column(db.Integer, nullable=False)
+    progress = db.Column(db.Integer, nullable=False)
+    date_started = db.Column(db.DateTime, nullable=True)
+    date_completed = db.Column(db.DateTime, nullable=True)
+    output = db.Column(db.Text, nullable=False)
+    command = db.Column(db.String(250), nullable=False)
 
 
 @login_manager.user_loader
@@ -51,7 +83,7 @@ class RegisterForm(FlaskForm):
 
 @app.route('/')
 def index():
-    if (user.is_authenticated()):
+    if current_user.is_authenticated():
         return redirect(url_for('dashboard'))
     else:
         return redirect(url_for('login'))
@@ -68,6 +100,7 @@ def login():
                 login_user(user, remember=form.remember.data)
                 return redirect(url_for('dashboard'))
 
+        # TODO FLASH INVALID USERNAME PASSWORD
         return '<h1>Invalid username or password</h1>'
 
     return render_template('login.html', form=form)
@@ -83,9 +116,10 @@ def signup():
         db.session.add(new_user)
         db.session.commit()
 
+        # TODO FLASH CREATED!
         return '<h1>New user has been created!</h1>'
 
-    return render_template('signup.html', form=form)
+    return render_template('login.html', form=form)
 
 
 @app.route('/dashboard')
@@ -97,83 +131,96 @@ def dashboard():
 @app.route('/scan/list')
 @login_required
 def scans():
-    return render_template('scan/list.html', name=current_user.username)
+    return render_template('scan/list.html', name=current_user.username, scans=Scan.query.filter_by(current_user.id).all())
 
 
-@app.route('/scan/<int:scan_id>')
+@app.route('/scan/<int:scan_id>', methods=['GET', 'POST'])
 @app.route('/scan')
 @login_required
 def scan_form(scan_id=False):
-    # if request method is post
-        # pobably create or update
-            # if scan_id exists:
-                # update
-            # else:
-                # create
-    # else:
-        # if scan if exists:
-            # view
-        # else:
+    query = Scan.query.filter_by(scan_id=scan_id)
+    if request.method == 'POST':
+        if query:
+            # update form
+            return render_template('scan/form.html', name=current_user.username, scan=query)
+        else:
+            # TODO
             # create
-    return render_template('scan/form.html', name=current_user.username)
+            # call the function to create and bind the scan processes id to the scan processes
+            # get new scan object created after scan creation
+            created_query = Scan.query.filter_by(scan_id=scan_id)
+            # return the page with the new creation data
+            return render_template('scan/form.html', name=current_user.username, scan=created_query)
+    else:
+        if query:
+            return render_template('scan/form.html', name=current_user.username, scan=query)
 
 
 @app.route('/scan/<int:scan_id>/report')
 @login_required
 def scan_report(scan_id=False):
-    # if scan_id false:
-        # redirect to scan/list
-    # get scan process outputs
-    pass
+    if scan_id is False:
+        return redirect(url_for('scan/list'))
+    else:
+        scan_obj = Scan.query.filterby(scan_id=scan_id)
+        if scan_obj:
+            return render_template('scan/form.html', name=current_user.username, scan=scan_obj)
+        else:
+            # Scan not Found
+            # flash that scan wasnt found on page
+            # redirect to scan list
+            return redirect(url_for('scan/list'))
 
 
 @app.route('/target/list')
 @login_required
-def targets():
-    return render_template('target/list.html', name=current_user.username)
+def target():
+    return render_template('target/list.html', name=current_user.username, scan=Scan.query.filter_by(user_id=current_user.id).all())
 
 
 @app.route('/target/<int:target_id>')
 @app.route('/target')
 @login_required
 def target_form(target_id=False):
-    # if request method is post
-    # pobably create or update
-    # if target_id exists:
-    # update
-    # else:
-    # create
-    # else:
-    # if target if exists:
-    # view
-    # else:
-    # create
-    return render_template('target/form.html', name=current_user.username)
-
+    query = Target.query.filter_by(target_id=target_id)
+    if request.method == 'POST':
+        if target_id is False:
+            # TODO
+            # create
+            # create the new target by adding to db
+            # get net targt obj
+            target_obj = Target.query.filter_by(target_id=target_id)
+            return render_template('target/form.html', name=current_user.username, target=target_obj)
+            pass
+        else:
+            # update
+            # TODO DOUBT IF NO TARGET ID THEN WHAT AM I UPDATING??
+            # veiw the page with updated content from db
+            return render_template('target/form.html', name=current_user.username, target=query)
+    else:
+        if query:
+            # view
+            return render_template('target/form.html', name=current_user.username, target=query)
+        else:
+            # TODO
+            # create
+            # create the new target by adding to db
+            # get net target obj
+            target_obj = Target.query.filter_by(target_id=target_id)
+            return render_template('target/form.html', name=current_user.username, target=target_obj)
 
 
 @app.route('/target/<int:target_id>/authorize')
 @login_required
 def target_authorize(target_id=False):
-    # if target_id false:
-    # redirect to target/list
-    # get the target from database to show location of auth key
-    # if request method is post
-    # authorize request
-    # else:
-    return render_template('target/authorize.html', name=current_user.username)
-
-
-@app.route('/webManagement')
-@login_required
-def webManagement():
-    return render_template('webManagement.html', name=current_user.username)
-
-
-@app.route('/reports')
-@login_required
-def reports():
-    return render_template('reports.html', name=current_user.username)
+    query = Target.query.filter_by(target_id=target_id)
+    if target_id is False:
+        redirect(url_for('target/list'))
+    if request.method == 'POST':
+        # authorize
+        pass
+    else:
+        return render_template('target/authorize.html', name=current_user.username, target=query)
 
 
 @app.route('/logout')
