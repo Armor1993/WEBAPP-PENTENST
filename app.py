@@ -12,7 +12,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secrett!'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 bootstrap = Bootstrap(app)
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -143,20 +143,18 @@ def scan_form(scan_id=False):
     if request.method == 'POST':
         if query:
             # update db
-            updict = request.json
-            query.title = updict['title']
+            query.title = request.form['title']
             query.date_created = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             query.user_id = current_user.id
-            query.target_id = updict['target_id']
+            query.target_id = request.form['target_id']
             db.session.commit()
         else:
             # TODO
             # create
             newscan = Scan()
-            newdict = request.json
-            newscan.title = newdict['title']
+            newscan.title = request.form['title']
             newscan.date_created = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            newscan.target_id = newdict['target_id']
+            newscan.target_id = request.form['target_id']
             db.session.add(newscan)
             db.session.commit()
             scan_id = newscan.id
@@ -190,7 +188,7 @@ def target():
     return render_template('target/list.html', name=current_user.username, scan=Scan.query.filter_by(user_id=current_user.id).all())
 
 
-@app.route('/target/<int:target_id>')
+@app.route('/target/<int:target_id>',  methods=['GET', 'POST'])
 @app.route('/target')
 @login_required
 def target_form(target_id=False):
@@ -200,8 +198,7 @@ def target_form(target_id=False):
             # TODO
             # create
             new_target = Target()
-            newdict = request.json
-            new_target.domain = newdict['domain']
+            new_target.domain = request.form['domain']
             new_target.user_id = current_user.id
             db.session.add(new_target)
             db.session.commit()
@@ -210,10 +207,8 @@ def target_form(target_id=False):
             # get net targt obj
         else:
             # update
-            updict = request.json
-            query.title = updict['title']
             query.user_id = current_user.id
-            query.domain = updict['domain']
+            query.domain = request.form['domain']
             db.session.commit()
     else:
         if query:
@@ -225,8 +220,7 @@ def target_form(target_id=False):
             # create the new target by adding to db
             # get new target obj
             new_target = Target()
-            newdict = request.json
-            new_target.domain = newdict['domain']
+            new_target.domain = request.form['domain']
             new_target.user_id = current_user.id
             db.session.add(new_target)
             db.session.commit()
