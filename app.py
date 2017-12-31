@@ -1,12 +1,13 @@
+import datetime
+import sys
 from flask import Flask, render_template, redirect, url_for, request
 from flask_bootstrap import Bootstrap
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, IntegerField, BooleanField
-from wtforms.validators import InputRequired, Email, Length
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-import datetime
+from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import FlaskForm
+from werkzeug.security import generate_password_hash, check_password_hash
+from wtforms import StringField, PasswordField, BooleanField
+from wtforms.validators import InputRequired, Email, Length
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secrett!'
@@ -36,8 +37,8 @@ class Scan(db.Model):
     date_created = db.Column(db.DateTime, nullable=False)
     date_started = db.Column(db.DateTime, nullable=True)
     date_completed = db.Column(db.DateTime, nullable=True)
-    status = db.Column(db.Integer, nullable=False)
-    progress = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.Integer, nullable=True)
+    progress = db.Column(db.Integer, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     target_id = db.Column(db.Integer, db.ForeignKey('target.id'), nullable=False)
 
@@ -47,18 +48,18 @@ class Target(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     domain = db.Column(db.String(100), nullable=False)
     status = db.Column(db.Integer, nullable=True)
-    key = db.Column(db.Text, nullable=False)
+    key = db.Column(db.Text, nullable=True)
 
 
 class Process(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     scan_id = db.Column(db.Integer, db.ForeignKey('scan.id'))
     process = db.Column(db.String(10), nullable=False)
-    status = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.Integer, nullable=True)
     progress = db.Column(db.Integer, nullable=False)
     date_started = db.Column(db.DateTime, nullable=True)
     date_completed = db.Column(db.DateTime, nullable=True)
-    output = db.Column(db.Text, nullable=False)
+    output = db.Column(db.Text, nullable=True)
     command = db.Column(db.String(250), nullable=False)
 
 
@@ -84,7 +85,7 @@ class RegisterForm(FlaskForm):
 
 @app.route('/')
 def index():
-    if current_user.is_authenticated():
+    if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     else:
         return redirect(url_for('login'))
@@ -97,12 +98,13 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
+            print(user.password==form.password.data)
             if check_password_hash(user.password, form.password.data):
                 login_user(user, remember=form.remember.data)
                 return redirect(url_for('dashboard'))
-
-        # TODO FLASH INVALID USERNAME PASSWORD
-        return '<h1>Invalid username or password</h1>'
+        else:
+            # TODO FLASH INVALID USERNAME PASSWORD
+            return '<h1>Invalid username or password</h1>'
 
     return render_template('login.html', form=form)
 
@@ -120,7 +122,7 @@ def signup():
         # TODO FLASH CREATED!
         return '<h1>New user has been created!</h1>'
 
-    return render_template('login.html', form=form)
+    return render_template('signup.html', form=form)
 
 
 @app.route('/dashboard')
@@ -132,19 +134,19 @@ def dashboard():
 @app.route('/scan/list')
 @login_required
 def scans():
-    return render_template('scan/list.html', name=current_user.username, scans=Scan.query.filter_by(current_user.id).all())
+    return render_template('scan/list.html', name=current_user.username, scans=Scan.query.filter_by(user_id=current_user.id).first())
 
 
 @app.route('/scan/<int:scan_id>', methods=['GET', 'POST'])
-@app.route('/scan')
+@app.route('/scan', methods=['GET', 'POST'])
 @login_required
 def scan_form(scan_id=False):
-    query = Scan.query.filter_by(scan_id=scan_id)
+    query = Scan.query.filter_by(id=scan_id).first()
     if request.method == 'POST':
         if query:
             # update db
             query.title = request.form['title']
-            query.date_created = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            query.date_created = datetime.datetime.now()
             query.user_id = current_user.id
             query.target_id = request.form['target_id']
             db.session.commit()
@@ -153,7 +155,7 @@ def scan_form(scan_id=False):
             # create
             newscan = Scan()
             newscan.title = request.form['title']
-            newscan.date_created = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            newscan.date_created = datetime.datetime.now()
             newscan.target_id = request.form['target_id']
             db.session.add(newscan)
             db.session.commit()
@@ -162,7 +164,7 @@ def scan_form(scan_id=False):
             # get new scan object created after scan creation
             # return the page with the new creation data
 
-    newquery = Scan.query.filter_by(scan_id=scan_id)
+    newquery = Scan.query.filter_by(scan_id=scan_id).first()
     return render_template('scan/form.html', name=current_user.username, scan=newquery)
 
 
@@ -172,7 +174,7 @@ def scan_report(scan_id=False):
     if scan_id is False:
         return redirect(url_for('scan/list'))
     else:
-        scan_obj = Scan.query.filterby(scan_id=scan_id)
+        scan_obj = Scan.query.filterby(id=scan_id).first()
         if scan_obj:
             return render_template('scan/form.html', name=current_user.username, scan=scan_obj)
         else:
@@ -185,14 +187,20 @@ def scan_report(scan_id=False):
 @app.route('/target/list')
 @login_required
 def target():
-    return render_template('target/list.html', name=current_user.username, scan=Scan.query.filter_by(user_id=current_user.id).all())
+    target = {}
+    target_query = Target.query.filter_by(user_id=current_user.id).all()
+    print(target_query)
+    for item in target_query:
+        target[item.id] = item
+    print(target)
+    return render_template('target/list.html', name=current_user.username, target=target)
 
 
 @app.route('/target/<int:target_id>',  methods=['GET', 'POST'])
-@app.route('/target')
+@app.route('/target', methods=['GET', 'POST'])
 @login_required
 def target_form(target_id=False):
-    query = Target.query.filter_by(target_id=target_id)
+    query = Target.query.filter_by(id=target_id).first()
     if request.method == 'POST':
         if target_id is False:
             # TODO
@@ -203,6 +211,7 @@ def target_form(target_id=False):
             db.session.add(new_target)
             db.session.commit()
             target_id = new_target.id
+            sys.stderr.write(new_target)
             # create the new target by adding to db
             # get net targt obj
         else:
@@ -225,14 +234,14 @@ def target_form(target_id=False):
             db.session.add(new_target)
             db.session.commit()
             target_id = new_target.id
-
-    return render_template('target/form.html', name=current_user.username, target=target_id)
+    newquery = Target.query.filter_by(id=target_id).first()
+    return render_template('target/form.html', name=current_user.username, target=newquery)
 
 
 @app.route('/target/<int:target_id>/authorize')
 @login_required
 def target_authorize(target_id=False):
-    query = Target.query.filter_by(target_id=target_id)
+    query = Target.query.filter_by(id=target_id).first()
     if target_id is False:
         redirect(url_for('target/list'))
     if request.method == 'POST':
