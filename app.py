@@ -1,5 +1,7 @@
 import datetime
 import sys
+from json import dumps
+from sqlalchemy.inspection import inspect
 from flask import Flask, render_template, redirect, url_for, request
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -21,7 +23,23 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 
-class User(UserMixin, db.Model):
+class Serializer(object):
+    def serialize(self):
+        ret = {}
+        for c in inspect(self).attrs.keys():
+            if isinstance(getattr(self, c), datetime.datetime):
+                date = getattr(self, c)
+                ret[c] = date.isoformat()
+            else:
+                ret[c] = getattr(self, c)
+        return ret
+
+    @staticmethod
+    def serialize_list(l):
+        return [m.serialize() for m in l]
+
+
+class User(UserMixin, db.Model, Serializer):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     firstname = db.Column(db.String(15), nullable=False)
     lastname = db.Column(db.String(15), nullable=True)
@@ -31,7 +49,7 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(80))
 
 
-class Scan(db.Model):
+class Scan(db.Model, Serializer):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     date_created = db.Column(db.DateTime, nullable=False)
@@ -43,7 +61,7 @@ class Scan(db.Model):
     target_id = db.Column(db.Integer, db.ForeignKey('target.id'), nullable=False)
 
 
-class Target(db.Model):
+class Target(db.Model, Serializer):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     domain = db.Column(db.String(100), nullable=False)
@@ -51,7 +69,7 @@ class Target(db.Model):
     key = db.Column(db.Text, nullable=True)
 
 
-class Process(db.Model):
+class Process(db.Model, Serializer):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     scan_id = db.Column(db.Integer, db.ForeignKey('scan.id'))
     process = db.Column(db.String(10), nullable=False)
@@ -98,7 +116,6 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
-            print(user.password==form.password.data)
             if check_password_hash(user.password, form.password.data):
                 login_user(user, remember=form.remember.data)
                 return redirect(url_for('dashboard'))
@@ -134,7 +151,9 @@ def dashboard():
 @app.route('/scan/list')
 @login_required
 def scans():
-    return render_template('scan/list.html', name=current_user.username, scans=Scan.query.filter_by(user_id=current_user.id).first())
+    scan = Scan.query.filter_by(user_id=current_user.id).all()
+    ret = dumps(Scan.serialize_list(scan))
+    return render_template('scan/list.html', name=current_user.username, scans=ret)
 
 
 @app.route('/scan/<int:scan_id>', methods=['GET', 'POST'])
@@ -187,13 +206,9 @@ def scan_report(scan_id=False):
 @app.route('/target/list')
 @login_required
 def target():
-    target = {}
-    target_query = Target.query.filter_by(user_id=current_user.id).all()
-    print(target_query)
-    for item in target_query:
-        target[item.id] = item
-    print(target)
-    return render_template('target/list.html', name=current_user.username, target=target)
+    targ = Target.query.filter_by(user_id=current_user.id).all()
+    ret = dumps(Scan.serialize_list(targ))
+    return render_template('target/list.html', name=current_user.username, scans=ret)
 
 
 @app.route('/target/<int:target_id>',  methods=['GET', 'POST'])
