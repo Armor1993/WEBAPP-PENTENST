@@ -10,7 +10,7 @@ from app import db, Process, Scan, Target
 # DONE store results or progress states in PROCESS db
 
 
-class NMAP:
+class Nmap:
 
     @staticmethod
     def create_nmprocess(scan_id):
