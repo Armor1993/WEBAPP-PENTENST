@@ -100,7 +100,7 @@ def test():
 
     print('Scan completed')
 
-    #Report the results
+    # Report the results
 
     print('Hosts: ' + ', '.join(zap.core.hosts))
     print('Alerts: ')
