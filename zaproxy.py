@@ -61,7 +61,7 @@ class Zap:
             db.session.commit()
             time.sleep(5)
         proc.status = 3
-        proc.output = 'Hosts: ' + ', '.join(zap.core.hosts) + '\nAlerts: ' + ', '.join(zap.core.alerts())
+        proc.output = str((zap.core.alerts()))
         proc.progress = 100
         db.session.commit()
 
