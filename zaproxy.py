@@ -134,3 +134,7 @@ def test():
     print('Hosts: ' + ', '.join(zap.core.hosts))
     print('Alerts: ')
     pprint(zap.core.alerts())
+
+
+if __name__ == '__main__':
+    test()

@@ -83,7 +83,7 @@ class Nmap:
 
 # DONT ADD THIS FUNCTION TO THE CALSS DIAGRAM
 def test(target):
-    nm = NmapProcess(targets=target, options="-sV -Pn -f --mtu 64 -p '*' -O ")
+    nm = NmapProcess(targets=target, options="-sV -Pn -f -p '*' -O ")
     rc = nm.sudo_run_background()
 
     while nm.is_running():
@@ -105,4 +105,4 @@ def test(target):
 
 
 if __name__ == '__main__':
-    test("iyte.edu.tr")
+    test("setloki.com")
