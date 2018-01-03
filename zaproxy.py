@@ -6,11 +6,23 @@ from app import db, Process, Target, Scan
 
 apikey = '1baf49842fb49da4'
 
+# TODO Add ZAP output parser
+
 
 class Zap:
+    """
+     Creates and runs the Zap scan
+    """
 
     @staticmethod
     def create_process(scan_id):
+        """
+        Creates a Process object for the scan id provided; and adds it to the database
+        :param scan_id: Id of the scan object that is related to the process
+        :return: None
+
+        """
+
         # query the database to get the domain out of the connected scan and target tables
         target_scan = Scan.query.get(id=scan_id)
         target_domain = Target.query.get(id=target_scan.target_id).domain
@@ -37,6 +49,12 @@ class Zap:
 
     @staticmethod
     def start_zscan(pid: int):
+        """
+        When run, queries the process information by the id provided from the database.
+        Runs the test and returns the ouput of the test to the database
+        :param pid: Id of process to run. Also used to get the target domain through database relation
+        :return: None
+        """
         zap = ZAPv2()
         proc = Process.query.get(id=pid)
         command = proc.command
@@ -65,7 +83,18 @@ class Zap:
         proc.progress = 100
         db.session.commit()
 
+    @staticmethod
+    def report_parser(zap_out: str)-> dict:
+        """
+        Given the string output of ZAP scan. The function converts the output into a dictionary and saves it to the database
+        :param zap_out: Zap scan output
+        :return: dict
+        """
+        # TODO
+        pass
 
+
+# DONT ADD TO CLASS DIAGRAM
 def test():
     # By default ZAP API client will connect to port 8080
     zap = ZAPv2(apikey=None)

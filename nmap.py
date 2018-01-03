@@ -4,17 +4,23 @@ from time import sleep
 from libnmap.parser import NmapParser, NmapParserException
 from app import db, Process, Scan, Target
 
-# DONE list of open ports
-# DONE services running on ports
 # TODO operating system of the scanned machine
-# DONE Retreive scan progress and status
-# DONE store results or progress states in PROCESS db
+# TODO Write XML Parser for output
+# TODO Create Nmap object for xml parser to fill
 
 
 class Nmap:
+    """
+    Runs the Nmap test and parses output, returning a dictinary of finding to the databse
+    """
 
     @staticmethod
     def create_nmprocess(scan_id):
+        """
+        Creates a Process object for the scan id provided; and adds it to the database
+        :param scan_id: Id of the scan object that is related to the process
+        :return: None
+        """
         # query the database to get the domain out of the connected scan and target tables
         target_scan = Scan.query.get(id=scan_id)
         target_domain = Target.query.get(id=target_scan.target_id).domain
@@ -28,6 +34,13 @@ class Nmap:
 
     @staticmethod
     def run_nmscan(target, pid: int):
+        """
+        When run, queries the process information by the id provided from the database.
+        Runs the test and returns the ouput of the test to the database
+        :param target: The target to be scanned
+        :param pid: Id of process to run
+        :return: None
+        """
         process = Process.query.get(id=pid)
         nm = NmapProcess(targets=target, options="-sV -Pn -f --mtu 64 -p '*' -O")
         rc = nm.run_background()
@@ -57,28 +70,18 @@ class Nmap:
         db.session.commit()
 
 
-def parse_scan(nm_report)-> dict:
-    ret = {}
-    for host in nm_report.hosts:
-        if len(host.hostnames):
-            hname = host.hostname.pop()
-        else:
-            hname = host.address
-        ret[hname] = {"started": nm_report.started, "address": host.address}
-        ret[hname]["ports"] = []
-        for serv in host.services:
-            ret[hname]["ports"].append({serv.port: {"proto": serv.protocol,
-                                                    "state": serv.state,
-                                                    "service": serv.service}})
-        if host.os_fingerprinted:
-            ret[hname]["os_guess"] = []
-            for osm in host.os.osmatches:
-                ret[hname]["os_guess"].append({osm.name: {"accuracy": osm.accuracy}})
-                for cpe in osm.get_cpe():
-                    ret[hname]["os_guess"][osm.name]["cpe"] = cpe
-    return ret
+    @staticmethod
+    def xml_parse(xmlstr: str) -> dict:
+        """
+        Parse the xml output of the nmap scan and create a dictionary of the scan findings
+        :param xmlstr: xml string output of the scan
+        :return: Dict
+        """
+        # TODO
+        pass
 
 
+# DONT ADD THIS FUNCTION TO THE CALSS DIAGRAM
 def test(target):
     nm = NmapProcess(targets=target, options="-sV -Pn -f --mtu 64 -p '*' -O ")
     rc = nm.sudo_run_background()
@@ -91,15 +94,11 @@ def test(target):
     if nm.is_successful():
         try:
             parsed = NmapParser.parse(nm.stdout)
-            out_dict = parse_scan(parsed)
-            print("MY DICTIONARY:\n")
-            print(out_dict)
-            print("SUMMARY:\n")
             print(parsed.summary)
+            output = str(nm.stdout)
+            print(output)
         except NmapParserException as e:
             print("Exception raised while parsing scan: {0}".format(e.msg))
-    #     output = str(nm.stdout)
-    #     print(output)
     else:
         out = str(nm.stderr)
         print(out)

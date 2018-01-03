@@ -40,6 +40,9 @@ class Serializer(object):
 
 
 class User(UserMixin, db.Model, Serializer):
+    """
+    User Table in the Database
+    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     firstname = db.Column(db.String(15), nullable=False)
     lastname = db.Column(db.String(15), nullable=True)
@@ -50,6 +53,9 @@ class User(UserMixin, db.Model, Serializer):
 
 
 class Scan(db.Model, Serializer):
+    """
+    Scan Table in Database
+    """
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     date_created = db.Column(db.DateTime, nullable=False)
@@ -59,9 +65,13 @@ class Scan(db.Model, Serializer):
     progress = db.Column(db.Integer, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     target_id = db.Column(db.Integer, db.ForeignKey('target.id'), nullable=False)
+    output = db.Column(db.Text, nullable=True)
 
 
 class Target(db.Model, Serializer):
+    """
+    Target Table in Database
+    """
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     domain = db.Column(db.String(100), nullable=False)
@@ -70,6 +80,9 @@ class Target(db.Model, Serializer):
 
 
 class Process(db.Model, Serializer):
+    """
+    Process Table in database
+    """
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     scan_id = db.Column(db.Integer, db.ForeignKey('scan.id'))
     process = db.Column(db.String(10), nullable=False)
@@ -82,7 +95,12 @@ class Process(db.Model, Serializer):
 
 
 @login_manager.user_loader
-def load_user(user_id):
+def load_user(user_id) -> User:
+    """
+    Loads user from database based on given user_id
+    :param user_id:
+    :return: User
+    """
     return User.query.get(int(user_id))
 
 
