@@ -1,12 +1,12 @@
 import datetime
 import sys
 from json import dumps
-from sqlalchemy.inspection import inspect
 from flask import Flask, render_template, redirect, url_for, request
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
+from sqlalchemy.inspection import inspect
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
@@ -14,13 +14,12 @@ from wtforms.validators import InputRequired, Email, Length
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secrett!'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql://root:root@localhost/WEBAPPTEST"
 bootstrap = Bootstrap(app)
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = "login"
 
 
 class Serializer(object):
@@ -150,7 +149,15 @@ def signup():
 
     if form.validate_on_submit():
         hashed_password = generate_password_hash(form.password.data, method='sha256')
-        new_user = User(username=form.username.data, email=form.email.data, password=hashed_password)
+
+        new_user = User()
+        new_user.username = form.username.data
+        new_user.email = form.email.data
+        new_user.password = hashed_password
+        new_user.firstname = form.firstname.data
+        new_user.lastname = form.lastname.data
+        new_user.companyname = form.companyname.data
+
         db.session.add(new_user)
         db.session.commit()
 
