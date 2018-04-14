@@ -225,7 +225,7 @@ def scan_report(scan_id=False):
             # Scan not Found
             # flash that scan wasnt found on page
             # redirect to scan list
-            return redirect(url_for('scan/list'))
+            return render_template('scan/scans.html', name=current_user.username)
 
 
 @app.route('/target/list')
@@ -304,10 +304,10 @@ def test_report():
     return render_template('reports.html', name=current_user)
 
 
-@app.route('/scansexample')
+@app.route('/testscan')
 @login_required
 def test_scan():
-    return render_template('scans.html', name=current_user)
+    return render_template('scan/scans.html', name=current_user)
 
 
 if __name__ == '__main__':
