@@ -173,7 +173,7 @@ def dashboard():
     return render_template('dashboard.html', name=current_user.username)
 
 
-@app.route('/scan/list')
+@app.route('/scans')
 @login_required
 def scans():
     scan = Scan.query.filter_by(user_id=current_user.id).all()
@@ -296,6 +296,18 @@ def target_authorize(target_id=False):
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+
+@app.route('/testreport')
+@login_required
+def test_report():
+    return render_template('reports.html', name=current_user)
+
+
+@app.route('/scansexample')
+@login_required
+def test_scan():
+    return render_template('scans.html', name=current_user)
 
 
 if __name__ == '__main__':
