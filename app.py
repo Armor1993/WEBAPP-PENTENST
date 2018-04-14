@@ -1,5 +1,6 @@
 import datetime
 import sys
+from os import path, walk
 from json import dumps
 from flask import Flask, render_template, redirect, url_for, request
 from flask_bootstrap import Bootstrap
@@ -10,11 +11,17 @@ from sqlalchemy.inspection import inspect
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
+from sqlalchemy import create_engine
+
+user = 'root'
+passwd = 'root'
+host = 'localhost'
+db = 'WEBAPPTEST'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secrett!'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql://root:root@localhost/WEBAPPTEST"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://{0}:{1}@{2}/{3}'.format(user, passwd, host, db)
 bootstrap = Bootstrap(app)
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -71,7 +78,7 @@ class Target(db.Model, Serializer):
     """
     Target Table in Database
     """
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     domain = db.Column(db.String(100), nullable=False)
     status = db.Column(db.Integer, nullable=True)
@@ -236,7 +243,7 @@ def target():
     return render_template('target/list.html', name=current_user.username, scans=ret)
 
 
-@app.route('/target/<int:target_id>',  methods=['GET', 'POST'])
+@app.route('/target/<int:target_id>', methods=['GET', 'POST'])
 @app.route('/target', methods=['GET', 'POST'])
 @login_required
 def target_form(target_id=False):
@@ -254,28 +261,18 @@ def target_form(target_id=False):
             sys.stderr.write(new_target)
             # create the new target by adding to db
             # get net targt obj
+            # create query based on new target
         else:
             # update
             query.user_id = current_user.id
             query.domain = request.form['domain']
             db.session.commit()
+    elif request.method == "GET" and query:
+        pass
     else:
-        if query:
-            # view
-            return render_template('target/form.html', name=current_user.username, target=query)
-        else:
-            # TODO
-            # create
-            # create the new target by adding to db
-            # get new target obj
-            new_target = Target()
-            new_target.domain = request.form['domain']
-            new_target.user_id = current_user.id
-            db.session.add(new_target)
-            db.session.commit()
-            target_id = new_target.id
-    newquery = Target.query.filter_by(id=target_id).first()
-    return render_template('target/form.html', name=current_user.username, target=newquery)
+        # create not found message and redirect to list
+        pass
+    return render_template('target/form.html', name=current_user.username, target=query)
 
 
 @app.route('/target/<int:target_id>/authorize')
@@ -311,4 +308,13 @@ def test_scan():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    extra_dirs = ['/root/PycharmProjects/WEBAPP-PENTENST/templates']
+    extra_files = extra_dirs[:]
+    for extra_dir in extra_dirs:
+        for dirname, dirs, files in walk(extra_dir):
+            for filename in files:
+                filename = path.join(dirname, filename)
+                if path.isfile(filename):
+                    extra_files.append(filename)
+
+    app.run(extra_files=extra_files, debug=True)

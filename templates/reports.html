@@ -1,83 +1,59 @@
 {% include 'header.html' %}
-<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+<div class="col-12">
     <h1 class="page-header">ALL REPORTS </h1>
+    <h3> Recent Reports </h3>
+    <table class="table table-striped table-hover">
 
-
-    <article>
-
-        <table border=1>
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <h3> Recent Reports </h3>
-                    <thead>
-                    <td>id</td>
-                    <td>name</td>
-                    <td> report file</td>
-
-                    </thead>
-
-                    {% for row in rows %}
-                        <tr>
-                            <td>{{ row["id"] }}</td>
-                            <td>{{ row["name"] }}</td>
-                            <td> {{ row["report_file"] }}</td>
-
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
-        </table>
-    </article>
-
-    <article>
-        <h3> Completed Reports </h3>
-
-        <div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
-             aria-hidden="true">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
-                <h3 id="myModalLabel">Delete</h3>
-            </div>
-            <div class="modal-body">
-                <p></p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-                <button data-dismiss="modal" class="btn red" id="btnYes">Confirm</button>
-            </div>
-        </div>
-        <table class="table table-striped table-hover table-users">
-            <thead>
+        <thead>
+        <tr>
+            <th>id</th>
+            <th>name</th>
+            <th>report file</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
             <tr>
-
-                <th class="hidden-phone">Report id</th>
-                <th>Name</th>
-                <th>Report File</th>
-                <th class="hidden-phone">Creation Date</th>
-                <th></th>
-                <th></th>
+                <td>{{ row["id"] }}</td>
+                <td>{{ row["name"] }}</td>
+                <td> {{ row["report_file"] }}</td>
             </tr>
-            </thead>
+        {% endfor %}
+        </tbody>
+    </table>
 
-            <tbody>
 
-            <tr>
+    <h3> Completed Reports </h3>
 
-                <td class="hidden-phone">1</td>
-                <td>ScanRport</td>
-                <td><a href=" " download>Scan.pdf</a></td>
-                <td class="hidden-phone">10/12/2012</td>
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
 
-                <td><a href="#" class="confirm-delete btn mini red-stripe" role="button" data-title="" data-id="1">Delete</a>
-                </td>
-                <td><a class="btn mini blue-stripe" href="">Send</a></td>
-            </tr>
+            <th>Report id</th>
+            <th>Name</th>
+            <th>Report File</th>
+            <th>Creation Date</th>
+            <th></th>
+            <th></th>
+        </tr>
+        </thead>
 
-            </tbody>
+        <tbody>
 
-        </table>
+        <tr>
 
-    </article>
+            <td>1</td>
+            <td>ScanRport</td>
+            <td><a href="#" download>Scan.pdf</a></td>
+            <td >10/12/2012</td>
 
+            <td><a href="#" class="confirm-delete btn mini red-stripe" role="button" data-title=""
+                   data-id="1">Delete</a>
+            </td>
+            <td><a class="btn mini blue-stripe" href="">Send</a></td>
+        </tr>
+
+        </tbody>
+    </table>
 </div>
 {% include 'footer.html' %}
