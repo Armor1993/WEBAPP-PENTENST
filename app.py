@@ -85,7 +85,7 @@ class Target(db.Model, Serializer):
     domain = db.Column(db.String(100), nullable=False)
     status = db.Column(db.Integer, nullable=True)
     key = db.Column(db.Text, nullable=True)
-    time_created  = db.Column(db.TIMESTAMP, nullable=True)
+    time_created = db.Column(db.TIMESTAMP, nullable=True)
 
 
 class Process(db.Model, Serializer):
@@ -223,7 +223,9 @@ def scan_form(scan_id=False):
                 newscan.scan_type = ""
                 newscan.progress = 0
                 newscan.status = 0
-                if request.form.get("all", False) or (request.form.get("nmap", False) and request.form.get("zap", False) and request.form.get("w3af", False)):
+                if request.form.get("all", False) or (
+                        request.form.get("nmap", False) and request.form.get("zap", False) and request.form.get("w3af",
+                                                                                                                False)):
                     newscan.scan_type = "all"
                 else:
                     if request.form.get("nmap", False):
