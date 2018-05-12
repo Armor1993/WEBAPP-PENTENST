@@ -3,8 +3,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="http://cdn.rawgit.com/Eonasdan/bootstrap-datetimepicker/e8bddc60e73c1ec2475f827be36e1957af72e2ea/build/css/bootstrap-datetimepicker.css"
+          rel="stylesheet">
+
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"
           integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <link href="/static/bootstrap-datepicker3.min.css">
 </head>
 
 
@@ -33,9 +39,9 @@
             </li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="{{ url_for('scans') }}" id="dropdown04" data-toggle="dropdown"
-                   aria-haspopup="true" aria-expanded="false">Reports</a>
+                   aria-haspopup="true" aria-expanded="false">Scans</a>
                 <div class="dropdown-menu" aria-labelledby="dropdown04">
-                    <a class="dropdown-item" href="{{ url_for('scans') }}">Add Scan</a>
+                    <a class="dropdown-item" href="{{ url_for('scan_form') }}">Add Scan</a>
                     <a class="dropdown-item" href="{{ url_for('scans') }}">List Scans</a>
                 </div>
             </li>

@@ -1,3 +1,114 @@
 {% include 'header.html' %}
-    {{ scans|tojson|safe }}
+<body class="bg-light">
+<div class="container">
+    <div class="py-5">
+        <h2>Adding Scans</h2>
+        <p class="lead">Select from the list of added targets and then add a scan for them.</p>
+    </div>
+    <div class="row">
+        <div class="col-md-12 order-md-1">
+            <h4 class="mb-3">Scan Details</h4>
+            <form class="needs-validation" validate action="{{ url_for('scan_form') }}" method="post">
+                <div class="mb-3">
+                    <label for="username">Application/Website URL</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label for="Target">Target</label>
+                            <select class="custom-select d-block w-100" id="Target" required name="target">
+                                <option value="">Choose...</option>
+                                {% for target in targets %}
+                                        <option value="{{ target.id }}">{{ target.domain }}</option>
+                                {% endfor %}
+
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a Target.
+                            </div>
+                        </div>
+                        <div class="invalid-feedback" style="width: 100%;">
+                            App/site URL is required.
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="mb-4">
+
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="nmap" name="nmap">
+                    <label class="custom-control-label" for="nmap">Perform a Port Scan</label>
+                </div>
+                <hr class="mb-4">
+
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="zap" name="zap">
+                    <label class="custom-control-label" for="zap">Perform Zaproxy Scan</label>
+                </div>
+
+                <hr class="mb-4">
+
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="w3af" name="w3af">
+                    <label class="custom-control-label" for="w3af">Perform W3AF Scan</label>
+                </div>
+                <hr class="mb-4">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="all" name="all">
+                    <label class="custom-control-label" for="all">Perform all scans</label>
+                </div>
+                <hr class="mb-4">
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                        <label for="date">Date</label>
+                        <select class="custom-select d-block w-100" id="date" name="date">
+                            <option value="">Choose...</option>
+                            <option>United States</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Please select a valid date.
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="state">Start Time</label>
+                        <select class="custom-select d-block w-100" id="start_time" name="time">
+                            <option value="">Choose...</option>
+                            <option>California</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Please provide a valid state.
+                        </div>
+                    </div>
+                </div>
+                <hr class="mb-4">
+                <button class="btn btn-primary btn-lg btn-block" type="submit" name="submit">ADD SCAN
+                </button>
+            </form>
+
+        </div>
+    </div>
+    <script>
+        // Example starter JavaScript for disabling form submissions if there are invalid fields
+        (function () {
+            'use strict';
+
+            window.addEventListener('load', function () {
+                // Fetch all the forms we want to apply custom Bootstrap validation styles to
+                var forms = document.getElementsByClassName('needs-validation');
+
+                // Loop over them and prevent submission
+                var validation = Array.prototype.filter.call(forms, function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+</div>
+</body>
 {% include 'footer.html' %}

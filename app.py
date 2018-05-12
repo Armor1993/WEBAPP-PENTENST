@@ -12,6 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
 from sqlalchemy import create_engine
+import time
 
 user = 'root'
 passwd = 'root'
@@ -64,6 +65,7 @@ class Scan(db.Model, Serializer):
     """
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
+    scan_type = db.Column(db.String(5), nullable=True)
     date_created = db.Column(db.DateTime, nullable=False)
     date_started = db.Column(db.DateTime, nullable=True)
     date_completed = db.Column(db.DateTime, nullable=True)
@@ -83,6 +85,7 @@ class Target(db.Model, Serializer):
     domain = db.Column(db.String(100), nullable=False)
     status = db.Column(db.Integer, nullable=True)
     key = db.Column(db.Text, nullable=True)
+    time_created  = db.Column(db.TIMESTAMP, nullable=True)
 
 
 class Process(db.Model, Serializer):
@@ -92,8 +95,8 @@ class Process(db.Model, Serializer):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     scan_id = db.Column(db.Integer, db.ForeignKey('scan.id'))
     process = db.Column(db.String(10), nullable=False)
-    status = db.Column(db.Integer, nullable=True)
-    progress = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.Integer, nullable=True, default=0)
+    progress = db.Column(db.Integer, nullable=False, default=0)
     date_started = db.Column(db.DateTime, nullable=True)
     date_completed = db.Column(db.DateTime, nullable=True)
     output = db.Column(db.Text, nullable=True)
@@ -107,6 +110,10 @@ def load_user(user_id) -> User:
     :param user_id:
     :return: User
     """
+    u = User()
+    u.email = "adasfdasd1"
+    u.password = "asadad"
+
     return User.query.get(int(user_id))
 
 
@@ -184,8 +191,8 @@ def dashboard():
 @login_required
 def scans():
     scan = Scan.query.filter_by(user_id=current_user.id).all()
-    ret = dumps(Scan.serialize_list(scan))
-    return render_template('scan/list.html', name=current_user.username, scans=ret)
+    # ret = dumps(Scan.serialize_list(scan))
+    return render_template('scan/list.html', name=current_user.username, scans=scan)
 
 
 @app.route('/scan/<int:scan_id>', methods=['GET', 'POST'])
@@ -193,10 +200,12 @@ def scans():
 @login_required
 def scan_form(scan_id=False):
     query = Scan.query.filter_by(id=scan_id).first()
+    targets = Target.query.filter_by(user_id=current_user.id).all()
     if request.method == 'POST':
+        print(request.form)
         if query:
             # update db
-            query.title = request.form['title']
+            query.title = request.form['target']
             query.date_created = datetime.datetime.now()
             query.user_id = current_user.id
             query.target_id = request.form['target_id']
@@ -205,18 +214,36 @@ def scan_form(scan_id=False):
             # TODO
             # create
             newscan = Scan()
-            newscan.title = request.form['title']
-            newscan.date_created = datetime.datetime.now()
-            newscan.target_id = request.form['target_id']
+            try:
+                newscan.target_id = request.form['target']
+                target_query = Target.query.filter_by(id=request.form['target']).first()
+                newscan.title = target_query.domain
+                newscan.user_id = current_user.id
+                newscan.date_created = datetime.datetime.now()
+                newscan.scan_type = ""
+                newscan.progress = 0
+                newscan.status = 0
+                if request.form.get("all", False) or (request.form.get("nmap", False) and request.form.get("zap", False) and request.form.get("w3af", False)):
+                    newscan.scan_type = "all"
+                else:
+                    if request.form.get("nmap", False):
+                        newscan.scan_type += "n"
+                    if request.form.get("zap", False):
+                        newscan.scan_type += "z"
+                    if request.form.get("w3af", False):
+                        newscan.scan_type += "w"
+                if len(newscan.scan_type) == 0:
+                    newscan.scan_type = None
+            except Exception as ex:
+                print(str(ex))
             db.session.add(newscan)
             db.session.commit()
             scan_id = newscan.id
             # call the function to create and bind the scan processes id to the scan processes
             # get new scan object created after scan creation
             # return the page with the new creation data
-
-    newquery = Scan.query.filter_by(scan_id=scan_id).first()
-    return render_template('scan/form.html', name=current_user.username, scan=newquery)
+    newquery = Scan.query.filter_by(id=scan_id).first()
+    return render_template('scan/form.html', name=current_user.username, scan=newquery, targets=targets)
 
 
 @app.route('/scan/<int:scan_id>/report')
@@ -238,9 +265,8 @@ def scan_report(scan_id=False):
 @app.route('/target/list')
 @login_required
 def target():
-    targ = Target.query.filter_by(user_id=current_user.id).all()
-    ret = dumps(Scan.serialize_list(targ))
-    return render_template('target/list.html', name=current_user.username, scans=ret)
+    targets = Target.query.filter_by(user_id=current_user.id).all()
+    return render_template('target/list.html', name=current_user.username, targets=targets)
 
 
 @app.route('/target/<int:target_id>', methods=['GET', 'POST'])
@@ -249,30 +275,80 @@ def target():
 def target_form(target_id=False):
     query = Target.query.filter_by(id=target_id).first()
     if request.method == 'POST':
-        if target_id is False:
-            # TODO
-            # create
-            new_target = Target()
-            new_target.domain = request.form['domain']
-            new_target.user_id = current_user.id
-            db.session.add(new_target)
-            db.session.commit()
-            target_id = new_target.id
-            sys.stderr.write(new_target)
-            # create the new target by adding to db
-            # get net targt obj
-            # create query based on new target
-        else:
-            # update
-            query.user_id = current_user.id
-            query.domain = request.form['domain']
-            db.session.commit()
+        print(request.form)
+        try:
+            if target_id is False:
+                new_target = Target()
+                new_target.domain = request.form['domain']
+                if request.form.get("all", False):
+                    # add a scan object that performs all scans
+                    print("SCANTYPE: all")
+                    new_target.scan_type = "all"
+                else:
+                    if request.form.get("nmap", False):
+                        print("SCANTYPE: nmap")
+                        new_target.scan_type = "nmap"
+                        # Add nmap scan
+                        pass
+                    if request.form.get("zap", False):
+                        print("SCANTYPE: zap")
+                        new_target.scan_type = "zap"
+                        # add zap scan
+                        pass
+                    if request.form.get("w3af", False):
+                        print("SCANTYPE: w3af")
+                        new_target.scan_type = "w3af"
+                        # add w3af scan
+                        pass
+                if request.form["date"]:
+                    if request.form["time"]:
+                        # append them and create a timestamp to add to db
+                        pass
+                    else:
+                        # append them and create a timestamp to add to db
+                        pass
+                else:
+                    new_target.scan_time = datetime.datetime.now()
+                    pass
+                new_target.time_created = datetime.datetime.now()
+                new_target.user_id = current_user.id
+                db.session.add(new_target)
+                db.session.commit()
+                sys.stderr.write("ADDED: " + str(new_target.__dict__))
+                # get new targt obj
+                # create query based on new target
+            else:
+                # update
+                query.user_id = current_user.id
+                query.domain = request.form['domain']
+                # get target from database with id
+                db.session.commit()
+        except Exception as ex:
+            print(str(ex))
     elif request.method == "GET" and query:
         pass
     else:
         # create not found message and redirect to list
         pass
     return render_template('target/form.html', name=current_user.username, target=query)
+
+
+@app.route('/target/delete/<target_id>', methods=['GET'])
+@login_required
+def target_delete(target_id=False):
+    Target.query.filter_by(id=target_id).delete()
+    db.session.commit()
+    targets = Target.query.filter_by(user_id=current_user.id).all()
+    return render_template('target/list.html', name=current_user.username, targets=targets)
+
+
+@app.route('/scan/delete/<scan_id>', methods=['GET'])
+@login_required
+def scan_delete(scan_id=False):
+    Scan.query.filter_by(id=scan_id).delete()
+    db.session.commit()
+    scan = Scan.query.filter_by(user_id=current_user.id).all()
+    return render_template('scan/list.html', name=current_user.username, scans=scan)
 
 
 @app.route('/target/<int:target_id>/authorize')
@@ -301,15 +377,10 @@ def test_report():
     return render_template('reports.html', name=current_user)
 
 
-@app.route('/testscan')
-@login_required
-def test_scan():
-    return render_template('scan/scans.html', name=current_user)
-
-
 if __name__ == '__main__':
     extra_dirs = ['/root/PycharmProjects/WEBAPP-PENTENST/templates']
     extra_files = extra_dirs[:]
+    db.create_all()
     for extra_dir in extra_dirs:
         for dirname, dirs, files in walk(extra_dir):
             for filename in files:

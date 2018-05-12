@@ -1,48 +1,5 @@
 {% include 'header.html' %}
 
-<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-    <h1 class="page-header">Welcome for Scaning</h1>
-
-
-    <article>
-        <h2>Scanner</h2>
-        <div id="content">
-
-            <form method=POST enctype=multipart/form-data action="{{ url_for('test_scan') }}">
-                <strong>Target URL :</strong> <input placeholder="http://" type="url" tabindex=“6”
-                                                     oninvalid="setCustomValidity('please enter url')"
-                                                     oninput="setCustomValidity('')" required>
-                <p class="submit"><input type="submit" name="commit" value=RUN></p>
-            </form>
-            <div class="progress">
-                <div id="progressBar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0"
-                     aria-valuemax="100" style="width:0%">
-                </div>
-            </div>
-        </div>
-    </article>
-
-
-    <article>
-
-        <h3>Report downloading..</h3>
-        </form>
-        <div class="progress">
-            <div class="progress-bar progress-bar-downloading" role="progressbar" aria-valuenow="60"
-                 aria-valuemin="0" aria-valuemax="100" style="width:60%">
-                60%
-            </div>
-        </div>
-
-    </article>
-
-    <article>
-        <iframe src="http://docs.google.com/gview?url=http://example.com/mypdf.pdf&embedded=true"
-                style="width:718px; height:700px;" frameborder="0"></iframe>
-    </article>
-
-
-</div>
 {% include 'footer.html' %}
 
 
