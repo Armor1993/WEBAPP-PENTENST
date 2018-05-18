@@ -1,11 +1,10 @@
 from libnmap.process import NmapProcess
-from datetime import datetime
 from time import sleep
 from libnmap.parser import NmapParser, NmapParserException
-from app import db, Process, Scan, Target
 from xmljson import cobra as cb
 from xml.etree.ElementTree import fromstring
 import json
+from environment import *
 
 # TODO operating system of the scanned machine
 

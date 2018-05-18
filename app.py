@@ -1,106 +1,15 @@
-import datetime
+# import datetime
 import sys
-from nmap import Nmap
-from zaproxy import Zap
+from environment import *
+from nmap_lib import Nmap
+from zaproxy_lib import Zap
 from os import path, walk
-from flask import Flask, render_template, redirect, url_for, request
-from flask_bootstrap import Bootstrap
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from flask_sqlalchemy import SQLAlchemy
+from flask import render_template, redirect, url_for, request
+from flask_login import login_user, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-from sqlalchemy.inspection import inspect
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
-
-
-user = 'root'
-passwd = 'root'
-host = 'localhost'
-db = 'WEBAPPTEST'
-
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'Secrett!'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://{0}:{1}@{2}/{3}'.format(user, passwd, host, db)
-bootstrap = Bootstrap(app)
-db = SQLAlchemy(app)
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "login"
-
-
-class Serializer(object):
-    def serialize(self):
-        ret = {}
-        for c in inspect(self).attrs.keys():
-            if isinstance(getattr(self, c), datetime.datetime):
-                date = getattr(self, c)
-                ret[c] = date.isoformat()
-            else:
-                ret[c] = getattr(self, c)
-        return ret
-
-    @staticmethod
-    def serialize_list(l):
-        return [m.serialize() for m in l]
-
-
-class User(UserMixin, db.Model, Serializer):
-    """
-    User Table in the Database
-    """
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    firstname = db.Column(db.String(15), nullable=False)
-    lastname = db.Column(db.String(15), nullable=True)
-    companyname = db.Column(db.String(20), nullable=False)
-    username = db.Column(db.String(15), unique=True)
-    email = db.Column(db.String(50), unique=True)
-    password = db.Column(db.String(80))
-
-
-class Scan(db.Model, Serializer):
-    """
-    Scan Table in Database
-    """
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    scan_type = db.Column(db.String(5), nullable=True)
-    date_created = db.Column(db.DateTime, nullable=False)
-    date_started = db.Column(db.DateTime, nullable=True)
-    date_completed = db.Column(db.DateTime, nullable=True)
-    status = db.Column(db.Integer, nullable=True)
-    progress = db.Column(db.Integer, nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    target_id = db.Column(db.Integer, db.ForeignKey('target.id'), nullable=False)
-    output = db.Column(db.Text, nullable=True)
-
-
-class Target(db.Model, Serializer):
-    """
-    Target Table in Database
-    """
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    domain = db.Column(db.String(100), nullable=False)
-    status = db.Column(db.Integer, nullable=True)
-    key = db.Column(db.Text, nullable=True)
-    time_created = db.Column(db.TIMESTAMP, nullable=True)
-
-
-class Process(db.Model, Serializer):
-    """
-    Process Table in database
-    """
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    scan_id = db.Column(db.Integer, db.ForeignKey('scan.id'))
-    process = db.Column(db.String(10), nullable=False)
-    status = db.Column(db.Integer, nullable=True, default=0)
-    progress = db.Column(db.Integer, nullable=False, default=0)
-    date_started = db.Column(db.DateTime, nullable=True)
-    date_completed = db.Column(db.DateTime, nullable=True)
-    output = db.Column(db.Text, nullable=True)
-    command = db.Column(db.String(250), nullable=False)
 
 
 @login_manager.user_loader
@@ -110,10 +19,6 @@ def load_user(user_id) -> User:
     :param user_id:
     :return: User
     """
-    u = User()
-    u.email = "adasfdasd1"
-    u.password = "asadad"
-
     return User.query.get(int(user_id))
 
 
@@ -204,7 +109,7 @@ def scan_form(scan_id=False):
         print(request.form)
         if query:
             query.title = request.form['target']
-            query.date_created = datetime.datetime.now()
+            query.date_created = datetime.now()
             query.user_id = current_user.id
             query.target_id = request.form['target_id']
             db.session.commit()
@@ -215,7 +120,7 @@ def scan_form(scan_id=False):
                 target_query = Target.query.filter_by(id=request.form['target']).first()
                 newscan.title = target_query.domain
                 newscan.user_id = current_user.id
-                newscan.date_created = datetime.datetime.now()
+                newscan.date_created = datetime.now()
                 newscan.scan_type = ""
                 newscan.progress = 0
                 newscan.status = 0
@@ -311,9 +216,9 @@ def target_form(target_id=False):
                         # append them and create a timestamp to add to db
                         pass
                 else:
-                    new_target.scan_time = datetime.datetime.now()
+                    new_target.scan_time = datetime.now()
                     pass
-                new_target.time_created = datetime.datetime.now()
+                new_target.time_created = datetime.now()
                 new_target.user_id = current_user.id
                 db.session.add(new_target)
                 db.session.commit()

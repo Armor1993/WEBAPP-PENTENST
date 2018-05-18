@@ -1,10 +1,10 @@
 import time
-from datetime import datetime
 from pprint import pprint
 from zapv2 import ZAPv2
-from app import db, Process, Target, Scan
+from environment import *
 
-apikey = '1baf49842fb49da4'
+apikey = '1tji9t090d0eak9gr84qv835c0'
+
 
 class Zap:
     """
@@ -86,7 +86,7 @@ def test():
     zap = ZAPv2(apikey=None)
     target = 'http://setloki.com'
     # Use the line below if ZAP is not listening on port 8080, for example, if listening on port 8090
-    # zap = ZAPv2(apikey=apikey, proxies={'http': 'http://127.0.0.1:8090', 'https': 'http://127.0.0.1:8090'})
+    #zap = ZAPv2(apikey=apikey, proxies={'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080'})
 
     # do stuff
     print('Accessing target %s' % target)
