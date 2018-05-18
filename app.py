@@ -1,7 +1,8 @@
 import datetime
 import sys
+from nmap import Nmap
+from zaproxy import Zap
 from os import path, walk
-from json import dumps
 from flask import Flask, render_template, redirect, url_for, request
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -11,8 +12,7 @@ from sqlalchemy.inspection import inspect
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
-from sqlalchemy import create_engine
-import time
+
 
 user = 'root'
 passwd = 'root'
@@ -191,7 +191,6 @@ def dashboard():
 @login_required
 def scans():
     scan = Scan.query.filter_by(user_id=current_user.id).all()
-    # ret = dumps(Scan.serialize_list(scan))
     return render_template('scan/list.html', name=current_user.username, scans=scan)
 
 
@@ -204,15 +203,12 @@ def scan_form(scan_id=False):
     if request.method == 'POST':
         print(request.form)
         if query:
-            # update db
             query.title = request.form['target']
             query.date_created = datetime.datetime.now()
             query.user_id = current_user.id
             query.target_id = request.form['target_id']
             db.session.commit()
         else:
-            # TODO
-            # create
             newscan = Scan()
             try:
                 newscan.target_id = request.form['target']
@@ -227,11 +223,15 @@ def scan_form(scan_id=False):
                         request.form.get("nmap", False) and request.form.get("zap", False) and request.form.get("w3af",
                                                                                                                 False)):
                     newscan.scan_type = "all"
+                    Nmap.create_nmprocess(newscan.id)
+                    Zap.create_process(newscan.id)
                 else:
                     if request.form.get("nmap", False):
                         newscan.scan_type += "n"
+                        Nmap.create_nmprocess(newscan.id)
                     if request.form.get("zap", False):
                         newscan.scan_type += "z"
+                        Zap.create_process(newscan.id)
                     if request.form.get("w3af", False):
                         newscan.scan_type += "w"
                 if len(newscan.scan_type) == 0:
@@ -290,6 +290,7 @@ def target_form(target_id=False):
                     if request.form.get("nmap", False):
                         print("SCANTYPE: nmap")
                         new_target.scan_type = "nmap"
+                        Nmap.create_nmprocess(new_target.id)
                         # Add nmap scan
                         pass
                     if request.form.get("zap", False):

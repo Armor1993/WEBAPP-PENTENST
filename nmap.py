@@ -3,10 +3,11 @@ from datetime import datetime
 from time import sleep
 from libnmap.parser import NmapParser, NmapParserException
 from app import db, Process, Scan, Target
+from xmljson import cobra as cb
+from xml.etree.ElementTree import fromstring
+import json
 
 # TODO operating system of the scanned machine
-# TODO Write XML Parser for output
-# TODO Create Nmap object for xml parser to fill
 
 
 class Nmap:
@@ -28,7 +29,7 @@ class Nmap:
         proc = Process()
         proc.scan_id = scan_id
         proc.process = 'nmap'
-        proc.command = 'nmap, -sV -p "*" ' + target_domain
+        proc.command = 'nmap -sV -Pn -f --mtu 64 -p "*" -O ' + target_domain
         db.session.add(proc)
         db.session.commit()
 
@@ -66,19 +67,9 @@ class Nmap:
             process.status = nm.state
             process.output = str(nm.stderr)
         elif nm.is_successful():
-            process.output = str(nm.stdout)
+            process.status = nm.state
+            process.output = json.dumps(cb.data(fromstring(str(nm.stdout))))
         db.session.commit()
-
-
-    @staticmethod
-    def xml_parse(xmlstr: str) -> dict:
-        """
-        Parse the xml output of the nmap scan and create a dictionary of the scan findings
-        :param xmlstr: xml string output of the scan
-        :return: Dict
-        """
-        # TODO
-        pass
 
 
 # DONT ADD THIS FUNCTION TO THE CALSS DIAGRAM

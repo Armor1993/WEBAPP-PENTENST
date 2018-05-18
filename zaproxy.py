@@ -6,9 +6,6 @@ from app import db, Process, Target, Scan
 
 apikey = '1baf49842fb49da4'
 
-# TODO Add ZAP output parser
-
-
 class Zap:
     """
      Creates and runs the Zap scan
@@ -64,7 +61,6 @@ class Zap:
         db.session.commit()
         time.sleep(2)
         scanid = zap.spider.scan(command)
-        proc.status = 1
         db.session.commit()
         while int(zap.spider.status(scanid)) < 100:
             proc.progress = zap.spider.status(scanid)
@@ -82,16 +78,6 @@ class Zap:
         proc.output = str((zap.core.alerts()))
         proc.progress = 100
         db.session.commit()
-
-    @staticmethod
-    def report_parser(zap_out: str)-> dict:
-        """
-        Given the string output of ZAP scan. The function converts the output into a dictionary and saves it to the database
-        :param zap_out: Zap scan output
-        :return: dict
-        """
-        # TODO
-        pass
 
 
 # DONT ADD TO CLASS DIAGRAM

@@ -1,4 +1,9 @@
+flask-bootstrap
+flask-login
+flask-wtf
 flask
 flask-sqlalchemy
 wtforms
 werkzeug
+python-libnmap
+python-owasp-zap-v2.4
