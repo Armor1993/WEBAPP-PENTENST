@@ -19,7 +19,6 @@ class Zap:
         :return: None
 
         """
-
         # query the database to get the domain out of the connected scan and target tables
         target_scan = Scan.query.get(id=scan_id)
         target_domain = Target.query.get(id=target_scan.target_id).domain
@@ -75,26 +74,32 @@ class Zap:
             db.session.commit()
             time.sleep(5)
         proc.status = 3
-        proc.output = str((zap.core.alerts()))
+        proc.output = str(zap.core.alerts())
         proc.progress = 100
         db.session.commit()
+
+    @staticmethod
+    def get_zap_scan_outputs(scan_id):
+        zap_processes = []
+        all_ouputs = []
+        processes = Process.query.filter_by(scan_id=scan_id).all()
+        for process in processes:
+            if process.process == "zap":
+                zap_processes.append(process)
+        for process in zap_processes:
+            out_list = list(process.output)
+            for alert in out_list:
+                all_ouputs.append(ZapOutput(alert))
+        return all_ouputs
 
 
 # DONT ADD TO CLASS DIAGRAM
 def test():
-    # By default ZAP API client will connect to port 8080
     zap = ZAPv2(apikey=None)
     target = 'http://setloki.com'
-    # Use the line below if ZAP is not listening on port 8080, for example, if listening on port 8090
-    #zap = ZAPv2(apikey=apikey, proxies={'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080'})
-
-    # do stuff
     print('Accessing target %s' % target)
-    # try have a unique enough session...
     zap.urlopen(target)
-    # Give the sites tree a chance to get updated
     time.sleep(10)
-
     print('Spidering target %s' % target)
     scanid = zap.spider.scan(target)
     # Give the Spider a chance to start
@@ -102,21 +107,16 @@ def test():
     while int(zap.spider.status(scanid)) < 100:
         print('Spider progress %: ' + zap.spider.status(scanid))
         time.sleep(5)
-
     print('Spider completed')
-    # Give the passive scanner a chance to finish
+    # Give the passive scanner a chance to start
     time.sleep(5)
-
     print('Scanning target %s' % target)
     scanid = zap.ascan.scan(target)
     while int(zap.ascan.status(scanid)) < 100:
         print('Scan progress %: ' + zap.ascan.status(scanid))
         time.sleep(5)
-
     print('Scan completed')
-
     # Report the results
-
     print('Hosts: ' + ', '.join(zap.core.hosts))
     print('Alerts: ')
     pprint(zap.core.alerts())

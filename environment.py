@@ -93,3 +93,19 @@ class Process(db.Model, Serializer):
     date_completed = db.Column(db.DateTime, nullable=True)
     output = db.Column(db.Text, nullable=True)
     command = db.Column(db.String(250), nullable=False)
+
+
+class ZapOutput:
+    def __init__(self, params=None):
+        if not params:
+            params = {}
+        self.alert = params.get("alert", None)
+        self.attack = params.get("attack", None)
+        self.confidence = params.get("confidence", None)
+        self.evidence = params.get("evidence", None)
+        self.name = params.get("name", None)
+        self.other = params.get("other", None)
+        self.parameter = params.get("param", None)
+        self.reference = params.get("reference", None)
+        self.risk = params.get("risk", None)
+        self.solution = params.get("risk", None)
