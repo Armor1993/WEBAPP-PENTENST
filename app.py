@@ -1,8 +1,8 @@
 # import datetime
 import sys
 from environment import *
-from nmap_lib import Nmap
-from zaproxy_lib import Zap
+from nmap import Nmap
+from zaproxy import Zap
 from os import path, walk
 from flask import render_template, redirect, url_for, request
 from flask_login import login_user, login_required, logout_user, current_user
