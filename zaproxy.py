@@ -53,6 +53,7 @@ class Zap:
         """
         zap = ZAPv2()
         proc = Process.query.get(id=pid)
+        scan = Scan.query.get(id=proc.scan_id)
         command = proc.command
         zap.urlopen(command)
         proc.status = 1
@@ -63,6 +64,7 @@ class Zap:
         db.session.commit()
         while int(zap.spider.status(scanid)) < 100:
             proc.progress = zap.spider.status(scanid)
+            scan.progress = zap.spider.status(scanid)
             db.session.commit()
             time.sleep(5)
         time.sleep(5)
@@ -71,11 +73,14 @@ class Zap:
         db.session.commit()
         while int(zap.ascan.status(scanid)) < 100:
             proc.progress = zap.ascan.status(scanid)
+            scan.progress = zap.spider.status(scanid)
             db.session.commit()
             time.sleep(5)
         proc.status = 3
+        scan.status = 3
         proc.output = str(zap.core.alerts())
         proc.progress = 100
+        scan.progress = 100
         db.session.commit()
 
     @staticmethod

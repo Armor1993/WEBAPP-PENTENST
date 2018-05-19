@@ -29,14 +29,22 @@
                 </div>
             </td>
             <td>{{ scan.date_completed }}</td>
-            {#<td><a href="{{ url_for('scan_report') }}" class="btn btn-primary btn-block">Report</a></td>#}
-            <td><a href="#" class="btn btn-primary btn-block">Report</a></td>
+            {% if scan.progress == 100 %}
+            <td><a href="{{ url_for('scan_report', scan_id=scan.id) }}" class="btn btn-primary btn-block">Report</a></td>
+            {% else %}
+                {% if scan.progress > 0 %}
+                <td><a href="{{ url_for('scan_report', scan_id=scan.id) }}" class="btn btn-primary btn-block disabled">Report</a></td>
+                {% else %}
+                <td><a href="{{ url_for('scan_start', scan_id=scan.id) }}" class="btn btn-primary btn-block">Start Scan</a></td>
+                {% endif %}
+            {% endif %}
             <td><a href="#" data-action="delete-scan" data-id="{{ scan.id }}" data-title="{{ scan.title }}"
                    class="btn btn-primary btn-block">delete</a></td>
         </tr>
     {% endfor %}
     </tbody>
 </table>
+
 <script type="text/javascript">
     $(document).ready(function () {
         console.log("ready!");

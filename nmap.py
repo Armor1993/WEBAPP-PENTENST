@@ -33,15 +33,17 @@ class Nmap:
         db.session.commit()
 
     @staticmethod
-    def run_nmscan(target, pid: int):
+    def run_nmscan(pid: int):
         """
         When run, queries the process information by the id provided from the database.
         Runs the test and returns the ouput of the test to the database
-        :param target: The target to be scanned
         :param pid: Id of process to run
         :return: None
         """
         process = Process.query.get(id=pid)
+        scan = Scan.query.get(id=process.scan_id)
+        target_obj = Target.query.get(id=scan.target_id)
+        target = target_obj.domain
         nm = NmapProcess(targets=target, options="-sV -Pn -f --mtu 64 -p '*' -O")
         rc = nm.run_background()
         process.status = nm.state
@@ -58,15 +60,18 @@ class Nmap:
             print("Nmap Scan running: ETC: {0} DONE: {1}%".format(nm.etc,
                                                                   nm.progress))
             process.progress = nm.progress
+            scan.progress = nm.progress
             db.session.commit()
             sleep(5)
 
         process.date_completed = datetime.now().isoformat()
         if nm.has_failed():
             process.status = nm.state
+            scan.status = nm.state
             process.output = str(nm.stderr)
         elif nm.is_successful():
             process.status = nm.state
+            scan.status = nm.state
             process.output = json.dumps(cb.data(fromstring(str(nm.stdout))))
         db.session.commit()
 

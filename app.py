@@ -54,8 +54,8 @@ def login():
                 login_user(user, remember=form.remember.data)
                 return redirect(url_for('dashboard'))
         else:
-            # TODO FLASH INVALID USERNAME PASSWORD
-            return '<h1>Invalid username or password</h1>'
+            # return '<h1>Invalid username or password</h1>'
+            pass
 
     return render_template('login.html', form=form)
 
@@ -79,9 +79,11 @@ def signup():
         db.session.commit()
 
         # TODO FLASH CREATED!
-        return '<h1>New user has been created!</h1>'
-
-    return render_template('signup.html', form=form)
+        # return '<h1>New user has been created!</h1>'
+        form = LoginForm()
+        return render_template('login.html', form=form)
+    else:
+        return render_template('signup.html', form=form)
 
 
 @app.route('/dashboard')
@@ -168,10 +170,22 @@ def scan_report(scan_id=False):
         return redirect(url_for('scan/list'))
     else:
         scan_obj = Scan.query.filterby(id=scan_id).first()
-        if scan_obj:
-            return render_template('scan/form.html', name=current_user.username, scan=scan_obj)
+        processes = Process.query.filter_by(scan_id=scan_id).all()
+        if len(processes) > 1:
+            # TODO
+            return redirect(url_for('scan/list'))
         else:
-            return render_template('scan/scans.html', name=current_user.username)
+            if processes[0].process == "zap":
+                target_obj = Target.query.get(id=scan_obj.target_id)
+                domain = target_obj.domain
+                outputs, critical, warning, info = Zap.get_zap_scan_outputs(processes[0].id)
+                return render_template('zap_report.html', target=domain, critical=critical, warning=warning, info=info,
+                                       alerts=outputs)
+            elif processes[0].process == "nmap":
+                # TODO
+                return redirect(url_for('scan/list'))
+            else:
+                return redirect(url_for('scan/list'))
 
 
 @app.route('/target/list')
@@ -260,6 +274,19 @@ def target_delete(target_id=False):
 def scan_delete(scan_id=False):
     Scan.query.filter_by(id=scan_id).delete()
     db.session.commit()
+    scan = Scan.query.filter_by(user_id=current_user.id).all()
+    return render_template('scan/list.html', name=current_user.username, scans=scan)
+
+
+@app.route('/scan/start/<scan_id>', methods=['GET'])
+@login_required
+def scan_start(scan_id=False):
+    processes = Process.query.filter_by(scan_id=scan_id).all()
+    for process in processes:
+        if process.process == "zap":
+            Zap.start_zscan(process.id)
+        elif process.process == "nmap":
+            Nmap.run_nmscan(process.id)
     scan = Scan.query.filter_by(user_id=current_user.id).all()
     return render_template('scan/list.html', name=current_user.username, scans=scan)
 
