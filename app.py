@@ -1,5 +1,3 @@
-# import datetime
-import sys
 from environment import *
 from nmap import Nmap
 from zaproxy import Zap
@@ -124,20 +122,33 @@ def scan_form(scan_id=False):
                 newscan.scan_type = ""
                 newscan.progress = 0
                 newscan.status = 0
+                if request.form["date"]:
+                    if request.form["time"]:
+                        # append them and create a timestamp to add to db
+                        pass
+                    else:
+                        # append them and create a timestamp to add to db
+                        pass
                 if request.form.get("all", False) or (
                         request.form.get("nmap", False) and request.form.get("zap", False) and request.form.get("w3af",
                                                                                                                 False)):
                     newscan.scan_type = "all"
+                    db.session.add(newscan)
+                    db.session.commit()
                     Nmap.create_nmprocess(newscan.id)
                     Zap.create_process(newscan.id)
                 else:
                     if request.form.get("nmap", False):
-                        newscan.scan_type += "n"
+                        newscan.scan_type += "nmap"
+                        db.session.add(newscan)
+                        db.session.commit()
                         Nmap.create_nmprocess(newscan.id)
-                    if request.form.get("zap", False):
+                    elif request.form.get("zap", False):
                         newscan.scan_type += "z"
+                        db.session.add(newscan)
+                        db.session.commit()
                         Zap.create_process(newscan.id)
-                    if request.form.get("w3af", False):
+                    elif request.form.get("w3af", False):
                         newscan.scan_type += "w"
                 if len(newscan.scan_type) == 0:
                     newscan.scan_type = None
@@ -146,9 +157,6 @@ def scan_form(scan_id=False):
             db.session.add(newscan)
             db.session.commit()
             scan_id = newscan.id
-            # call the function to create and bind the scan processes id to the scan processes
-            # get new scan object created after scan creation
-            # return the page with the new creation data
     newquery = Scan.query.filter_by(id=scan_id).first()
     return render_template('scan/form.html', name=current_user.username, scan=newquery, targets=targets)
 
@@ -163,9 +171,6 @@ def scan_report(scan_id=False):
         if scan_obj:
             return render_template('scan/form.html', name=current_user.username, scan=scan_obj)
         else:
-            # Scan not Found
-            # flash that scan wasnt found on page
-            # redirect to scan list
             return render_template('scan/scans.html', name=current_user.username)
 
 
@@ -187,28 +192,15 @@ def target_form(target_id=False):
             if target_id is False:
                 new_target = Target()
                 new_target.domain = request.form['domain']
-                if request.form.get("all", False):
-                    # add a scan object that performs all scans
-                    print("SCANTYPE: all")
-                    new_target.scan_type = "all"
-                else:
-                    if request.form.get("nmap", False):
-                        print("SCANTYPE: nmap")
-                        new_target.scan_type = "nmap"
-                        Nmap.create_nmprocess(new_target.id)
-                        # Add nmap scan
-                        pass
-                    if request.form.get("zap", False):
-                        print("SCANTYPE: zap")
-                        new_target.scan_type = "zap"
-                        Zap.create_process(new_target.id)
-                        # add zap scan
-                        pass
-                    if request.form.get("w3af", False):
-                        print("SCANTYPE: w3af")
-                        new_target.scan_type = "w3af"
-                        # add w3af scan
-                        pass
+                new_target.time_created = datetime.now()
+                new_target.user_id = current_user.id
+                db.session.add(new_target)
+                db.session.commit()
+                new_scan = Scan()
+                new_scan.title = new_target.domain
+                new_scan.date_created = datetime.now().isoformat()
+                new_scan.user_id = current_user.id
+                new_scan.target_id = new_target.id
                 if request.form["date"]:
                     if request.form["time"]:
                         # append them and create a timestamp to add to db
@@ -216,28 +208,40 @@ def target_form(target_id=False):
                     else:
                         # append them and create a timestamp to add to db
                         pass
+                if request.form.get("all", False) or (
+                        request.form.get("nmap", False) and request.form.get("zap", False) and request.form.get("w3af",
+                                                                                                                False)):
+                    new_scan.scan_type = "all"
+                    db.session.add(new_scan)
+                    db.session.commit()
+                    Nmap.create_nmprocess(new_scan.id)
+                    Zap.create_process(new_scan.id)
                 else:
-                    new_target.scan_time = datetime.now()
-                    pass
-                new_target.time_created = datetime.now()
-                new_target.user_id = current_user.id
-                db.session.add(new_target)
-                db.session.commit()
-                sys.stderr.write("ADDED: " + str(new_target.__dict__))
-                # get new targt obj
-                # create query based on new target
+                    if request.form.get("nmap", False):
+                        print("SCANTYPE: nmap")
+                        new_scan.scan_type = "nmap"
+                        db.session.add(new_scan)
+                        db.session.commit()
+                        Nmap.create_nmprocess(new_scan.id)
+                    elif request.form.get("zap", False):
+                        print("SCANTYPE: zap")
+                        new_scan.scan_type = "zap"
+                        db.session.add(new_scan)
+                        db.session.commit()
+                        Zap.create_process(new_scan.id)
+                    elif request.form.get("w3af", False):
+                        print("SCANTYPE: w3af")
+                        new_scan.scan_type = "w3af"
             else:
                 # update
                 query.user_id = current_user.id
                 query.domain = request.form['domain']
-                # get target from database with id
                 db.session.commit()
         except Exception as ex:
             print(str(ex))
     elif request.method == "GET" and query:
         pass
     else:
-        # create not found message and redirect to list
         pass
     return render_template('target/form.html', name=current_user.username, target=query)
 
