@@ -1,0 +1,281 @@
+{% include 'header.html' %}
+<div class="container">
+    <!--  Title  -->
+    <div id="title" class="row">
+        <div class="col">
+            <h1 class="display-4">Zap Results</h1>
+            <p class="lead">domain name.</p>
+            <hr class="my-4">
+        </div>
+    </div>
+    <!--  -----------------------------------  -->
+
+    <!--  Legend  -->
+    <div id="legend" class="row justify-content-around">
+        <div id="legend-num-critical" class="col-2">
+            <h1 class="display-6">Critical</h1>
+            <div class="row">
+                <span class="badge badge-danger">12</span>
+            </div>
+        </div>
+        <div id="legend-num-warnings" class="col-auto">
+            <h1 class="display-6">Warnings</h1>
+            <div class="row">
+                <span class="badge badge-warning">3</span>
+            </div>
+        </div>
+        <div id="legend-num-info" class="col-2">
+            <h1 class="display-6">Info</h1>
+            <div class="row">
+                <span class="badge badge-secondary">9</span>
+            </div>
+        </div>
+    </div>
+    <hr class="my-4">
+    <!--  -----------------------------------  -->
+
+    <!--  Results  -->
+    <div id="results" class="container">
+        <!--  Critical Results  -->
+        <div>
+            <button class="btn btn-danger" type="button" data-toggle="collapse" data-target="#collapseCritical" aria-expanded="false" aria-controls="collapseCritical">
+                Critical
+            </button>
+            <div class="collapse container" id="collapseCritical">
+                <div id="div-results-critical" class="card card-body border-danger">
+                    <!--  Example Critical Result Box  -->
+                    <div id="critical-result1">
+                        <button class="btn btn-danger" type="button" data-toggle="collapse" data-target="#collapseCriticalResult1" aria-expanded="false" aria-controls="collapseCriticalResult1">
+                            Web Browser XSS Protection Not Enabled
+                        </button>
+                        <div class="collapse container" id="collapseCriticalResult1">
+                            <div id="div-results-critical" class="card card-body border-danger table-responsive">
+                                <table id="table-results-critical" class="table table-striped table-sm">
+                                  <tbody>
+                                    <tr>
+                                        <td width="20%">Attack</td>
+                                        <td width="80%"></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Confidence</td>
+                                        <td width="80%">Medium</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Evidence</td>
+                                        <td width="80%"></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Other</td>
+                                        <td width="80%">The X-XSS-Protection HTTP response header allows the web server to
+                                           enable or disable the web browser's XSS protection mechanism. The
+                                           following values would attempt to enable it: <br/>
+                                           X-XSS-Protection: 1; mode=block<br/>
+                                           X-XSS-Protection: 1; report=http://www.example.com/xss<br/>
+                                           The following values would disable it:<br/>
+                                           X-XSS-Protection: 0<br/>
+                                           The X-XSS-Protection HTTP response header is currently supported
+                                           on Internet Explorer, Chrome and Safari (WebKit).<br/>
+                                           Note that this alert is only raised if the response body could
+                                           potentially contain an XSS payload (with a text-based content
+                                           type, with a non-zero length).
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Parameter</td>
+                                        <td width="80%">X-XSS-Protection</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Reference</td>
+                                        <td width="80%">https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet<br/>
+               https://blog.veracode.com/2014/03/guidelines-for-setting-security-headers/</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Risk</td>
+                                        <td width="80%">Low</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Solution</td>
+                                        <td width="80%">Ensure that the web browser's XSS filter is enabled, by setting the X-XSS-Protection HTTP response header to '1'.</td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!--  ------------------  -->
+                </div>
+            </div>
+        </div>
+        <br/>
+
+        <!--  Warning Results  -->
+        <div>
+            <button class="btn btn-warning" type="button" data-toggle="collapse" data-target="#collapseWarning" aria-expanded="false" aria-controls="collapseWarning">
+                Warnings
+            </button>
+            <div class="collapse container" id="collapseWarning">
+                <div id="div-results-warning" class="card card-body border-warning">
+                    <!--  Example Warning Result Box  -->
+                    <div id="warning-result1">
+                        <button class="btn btn-warning" type="button" data-toggle="collapse" data-target="#collapseWarningResult1" aria-expanded="false" aria-controls="collapsWarningResult1">
+                            Web Browser XSS Protection Not Enabled
+                        </button>
+                        <div class="collapse container" id="collapseWarningResult1">
+                            <div id="div-results-warning" class="card card-body border-warning table-responsive">
+                                <table id="table-results-warning" class="table table-striped table-sm">
+                                  <tbody>
+                                    <tr>
+                                        <td width="20%">Attack</td>
+                                        <td width="80%"></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Confidence</td>
+                                        <td width="80%">Medium</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Evidence</td>
+                                        <td width="80%"></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Other</td>
+                                        <td width="80%">The X-XSS-Protection HTTP response header allows the web server to
+                                           enable or disable the web browser's XSS protection mechanism. The
+                                           following values would attempt to enable it: <br/>
+                                           X-XSS-Protection: 1; mode=block<br/>
+                                           X-XSS-Protection: 1; report=http://www.example.com/xss<br/>
+                                           The following values would disable it:<br/>
+                                           X-XSS-Protection: 0<br/>
+                                           The X-XSS-Protection HTTP response header is currently supported
+                                           on Internet Explorer, Chrome and Safari (WebKit).<br/>
+                                           Note that this alert is only raised if the response body could
+                                           potentially contain an XSS payload (with a text-based content
+                                           type, with a non-zero length).
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Parameter</td>
+                                        <td width="80%">X-XSS-Protection</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Reference</td>
+                                        <td width="80%">https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet<br/>
+               https://blog.veracode.com/2014/03/guidelines-for-setting-security-headers/</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Risk</td>
+                                        <td width="80%">Low</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Solution</td>
+                                        <td width="80%">Ensure that the web browser's XSS filter is enabled, by setting the X-XSS-Protection HTTP response header to '1'.</td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!--  ------------------  -->
+                </div>
+            </div>
+        </div>
+        <br/>
+
+        <!--  Info Results  -->
+        <div>
+            <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#collapseInfo" aria-expanded="false" aria-controls="collapseInfo">
+                Info
+            </button>
+            <div class="collapse container" id="collapseInfo">
+                <div id="div-results-info" class="card card-body border-secondary">
+                    <!--  Example Info Result Box  -->
+                    <div id="info-result1">
+                        <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#collapseInfoResult1" aria-expanded="false" aria-controls="collapseInfoResult1">
+                            Web Browser XSS Protection Not Enabled
+                        </button>
+                        <div class="collapse container" id="collapseInfoResult1">
+                            <div id="div-results-info" class="card card-body border-secondary table-responsive">
+                                <table id="table-results-info" class="table table-striped table-sm">
+                                  <tbody>
+                                    <tr>
+                                        <td width="20%">Attack</td>
+                                        <td width="80%"></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Confidence</td>
+                                        <td width="80%">Medium</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Evidence</td>
+                                        <td width="80%"></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Other</td>
+                                        <td width="80%">The X-XSS-Protection HTTP response header allows the web server to
+                                           enable or disable the web browser's XSS protection mechanism. The
+                                           following values would attempt to enable it: <br/>
+                                           X-XSS-Protection: 1; mode=block<br/>
+                                           X-XSS-Protection: 1; report=http://www.example.com/xss<br/>
+                                           The following values would disable it:<br/>
+                                           X-XSS-Protection: 0<br/>
+                                           The X-XSS-Protection HTTP response header is currently supported
+                                           on Internet Explorer, Chrome and Safari (WebKit).<br/>
+                                           Note that this alert is only raised if the response body could
+                                           potentially contain an XSS payload (with a text-based content
+                                           type, with a non-zero length).
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Parameter</td>
+                                        <td width="80%">X-XSS-Protection</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Reference</td>
+                                        <td width="80%">https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet<br/>
+               https://blog.veracode.com/2014/03/guidelines-for-setting-security-headers/</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Risk</td>
+                                        <td width="80%">Low</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%">Solution</td>
+                                        <td width="80%">Ensure that the web browser's XSS filter is enabled, by setting the X-XSS-Protection HTTP response header to '1'.</td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!--  ------------------  -->
+                </div>
+            </div>
+        </div>
+        <br/>
+
+    </div>
+    <br>
+    <br>
+    <!--  -----------------------------------  -->
+</div>
+
+</div>
+</body>
+
+<style>
+    #title {
+        text-align: center;
+    }
+    #legend div h1 {
+        text-align: center;
+    }
+    #legend div span{
+        margin: auto;
+        font-size: 150%;
+    }
+    #results .btn {
+        width: 100%;
+    }
+    #results
+</style>
+<!--  ===========================================================================================================  -->
+{% include 'footer.html' %}

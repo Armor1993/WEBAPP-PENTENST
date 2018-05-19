@@ -201,6 +201,7 @@ def target_form(target_id=False):
                     if request.form.get("zap", False):
                         print("SCANTYPE: zap")
                         new_target.scan_type = "zap"
+                        Zap.create_process(new_target.id)
                         # add zap scan
                         pass
                     if request.form.get("w3af", False):
@@ -282,7 +283,7 @@ def logout():
 @app.route('/testreport')
 @login_required
 def test_report():
-    return render_template('reports.html', name=current_user)
+    return render_template('zap_report.html', name=current_user)
 
 
 if __name__ == '__main__':

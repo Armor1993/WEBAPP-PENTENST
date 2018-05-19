@@ -82,6 +82,9 @@ class Zap:
     def get_zap_scan_outputs(scan_id):
         zap_processes = []
         all_ouputs = []
+        critical = 0
+        warning = 0
+        info = 0
         processes = Process.query.filter_by(scan_id=scan_id).all()
         for process in processes:
             if process.process == "zap":
@@ -89,8 +92,16 @@ class Zap:
         for process in zap_processes:
             out_list = list(process.output)
             for alert in out_list:
-                all_ouputs.append(ZapOutput(alert))
-        return all_ouputs
+                zap_obj = ZapOutput(alert)
+                all_ouputs.append(zap_obj)
+                if zap_obj.risk == "Low":
+                    critical += 1
+                elif zap_obj.risk == "Medium":
+                    warning += 1
+                elif zap_obj.risk == "High":
+                    info += 1
+
+        return all_ouputs, critical, warning, info
 
 
 # DONT ADD TO CLASS DIAGRAM
