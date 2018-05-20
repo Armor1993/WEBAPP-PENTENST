@@ -141,17 +141,18 @@ def scan_form(scan_id=False):
                     Zap.create_process(newscan.id)
                 else:
                     if request.form.get("nmap", False):
-                        newscan.scan_type += "nmap"
+                        newscan.scan_type = "nmap"
                         db.session.add(newscan)
                         db.session.commit()
+                        print("entering nmap process creation")
                         Nmap.create_nmprocess(newscan.id)
                     elif request.form.get("zap", False):
-                        newscan.scan_type += "z"
+                        newscan.scan_type = "z"
                         db.session.add(newscan)
                         db.session.commit()
                         Zap.create_process(newscan.id)
                     elif request.form.get("w3af", False):
-                        newscan.scan_type += "w"
+                        newscan.scan_type = "w"
                 if len(newscan.scan_type) == 0:
                     newscan.scan_type = None
             except Exception as ex:
@@ -228,6 +229,7 @@ def target_form(target_id=False):
                     new_scan.scan_type = "all"
                     db.session.add(new_scan)
                     db.session.commit()
+                    created_scan = Scan.query.filter_by()
                     Nmap.create_nmprocess(new_scan.id)
                     Zap.create_process(new_scan.id)
                 else:
@@ -263,6 +265,7 @@ def target_form(target_id=False):
 @app.route('/target/delete/<target_id>', methods=['GET'])
 @login_required
 def target_delete(target_id=False):
+    Scan.query.filter_by(target_id=target_id).delete()
     Target.query.filter_by(id=target_id).delete()
     db.session.commit()
     targets = Target.query.filter_by(user_id=current_user.id).all()
@@ -272,6 +275,7 @@ def target_delete(target_id=False):
 @app.route('/scan/delete/<scan_id>', methods=['GET'])
 @login_required
 def scan_delete(scan_id=False):
+    Process.query.filter_by(scan_id=scan_id).delete()
     Scan.query.filter_by(id=scan_id).delete()
     db.session.commit()
     scan = Scan.query.filter_by(user_id=current_user.id).all()
@@ -286,7 +290,9 @@ def scan_start(scan_id=False):
         if process.process == "zap":
             Zap.start_zscan(process.id)
         elif process.process == "nmap":
+            print("starting namp process")
             Nmap.run_nmscan(process.id)
+            print("ending nmap process")
     scan = Scan.query.filter_by(user_id=current_user.id).all()
     return render_template('scan/list.html', name=current_user.username, scans=scan)
 

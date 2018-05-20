@@ -22,8 +22,8 @@ class Nmap:
         :return: None
         """
         # query the database to get the domain out of the connected scan and target tables
-        target_scan = Scan.query.get(id=scan_id)
-        target_domain = Target.query.get(id=target_scan.target_id).domain
+        target_scan = Scan.query.filter_by(id=scan_id).first()
+        target_domain = Target.query.filter_by(id=target_scan.target_id).first().domain
         # Create new process object
         proc = Process()
         proc.scan_id = scan_id
@@ -40,18 +40,22 @@ class Nmap:
         :param pid: Id of process to run
         :return: None
         """
-        process = Process.query.get(id=pid)
-        scan = Scan.query.get(id=process.scan_id)
-        target_obj = Target.query.get(id=scan.target_id)
+        process = Process.query.filter_by(id=pid).first()
+        print("PROCESS:" + str(process.__dict__))
+        scan = Scan.query.filter_by(id=process.scan_id).first()
+        print("scan:" + str(scan.__dict__))
+        target_obj = Target.query.filter_by(id=scan.target_id).first()
+        print("Target:" + str(target_obj.__dict__))
         target = target_obj.domain
+        print(target)
         nm = NmapProcess(targets=target, options="-sV -Pn -f --mtu 64 -p '*' -O")
         rc = nm.run_background()
         process.status = nm.state
         process.progress = nm.progress
-        process.date_started = nm.starttime
-        db.session.comit()
+        process.date_started = datetime.now().isoformat()
+        db.session.commit()
 
-        if rc != 0:
+        if nm.has_failed():
             process.output = "nmap scan failed: {0}".format(nm.stderr)
             db.session.commit()
             return 1
@@ -59,20 +63,28 @@ class Nmap:
         while nm.is_running():
             print("Nmap Scan running: ETC: {0} DONE: {1}%".format(nm.etc,
                                                                   nm.progress))
-            process.progress = nm.progress
-            scan.progress = nm.progress
-            db.session.commit()
+            print(scan.progress)
+            print(type(scan.progress))
+            print(nm.progress)
+            print(type(nm.progress))
+            if int(scan.progress) < int(float(nm.progress)):
+                process.progress = int(float(nm.progress))
+                scan.progress = int(float(nm.progress))
+                db.session.commit()
             sleep(5)
 
         process.date_completed = datetime.now().isoformat()
+        scan.date_completed = datetime.now().isoformat()
         if nm.has_failed():
             process.status = nm.state
             scan.status = nm.state
             process.output = str(nm.stderr)
         elif nm.is_successful():
-            process.status = nm.state
-            scan.status = nm.state
+            process.status = 3
+            scan.status = 3
+            scan.progress = 100
             process.output = json.dumps(cb.data(fromstring(str(nm.stdout))))
+            scan.output = json.dumps(cb.data(fromstring(str(nm.stdout))))
         db.session.commit()
 
 

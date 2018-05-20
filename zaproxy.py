@@ -20,8 +20,8 @@ class Zap:
 
         """
         # query the database to get the domain out of the connected scan and target tables
-        target_scan = Scan.query.get(id=scan_id)
-        target_domain = Target.query.get(id=target_scan.target_id).domain
+        target_scan = Scan.query.filter_by(id=scan_id).first()
+        target_domain = Target.query.filter_by(id=target_scan.target_id).first().domain
         # Create new process object
         if 'http://' in target_domain or 'https://' in target_domain:
             proc = Process()
@@ -52,8 +52,8 @@ class Zap:
         :return: None
         """
         zap = ZAPv2()
-        proc = Process.query.get(id=pid)
-        scan = Scan.query.get(id=proc.scan_id)
+        proc = Process.query.filter_by(id=pid).first()
+        scan = Scan.query.filter_by(id=proc.scan_id).first()
         command = proc.command
         zap.urlopen(command)
         proc.status = 1
@@ -79,6 +79,7 @@ class Zap:
         proc.status = 3
         scan.status = 3
         proc.output = str(zap.core.alerts())
+        scan.output = str(zap.core.alerts())
         proc.progress = 100
         scan.progress = 100
         db.session.commit()
