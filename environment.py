@@ -106,7 +106,7 @@ class ZapOutputs(db.Model, Serializer):
     result = db.Column(db.TEXT, nullable=False)
 
 
-class ZapOutput:
+class ZapResult:
     def __init__(self, params=None):
         if not params:
             params = {}

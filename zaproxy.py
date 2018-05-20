@@ -103,7 +103,7 @@ class Zap:
         info = 0
         processes = ZapOutputs.query.filter_by(scan_id=scan_id).all()
         for process in processes:
-            result = ZapOutput(json.loads(process.result))
+            result = ZapResult(json.loads(process.result))
             result.result_num = process.id
             # out_list = list(process.output)
             if result.risk == "Low":
@@ -114,36 +114,3 @@ class Zap:
                 critical += 1
             all_ouputs.append(result)
         return all_ouputs, critical, warning, info
-
-
-# DONT ADD TO CLASS DIAGRAM
-def test():
-    zap = ZAPv2(apikey=None)
-    target = 'http://setloki.com'
-    print('Accessing target %s' % target)
-    zap.urlopen(target)
-    time.sleep(10)
-    print('Spidering target %s' % target)
-    scanid = zap.spider.scan(target)
-    # Give the Spider a chance to start
-    time.sleep(10)
-    while int(zap.spider.status(scanid)) < 100:
-        print('Spider progress %: ' + zap.spider.status(scanid))
-        time.sleep(5)
-    print('Spider completed')
-    # Give the passive scanner a chance to start
-    time.sleep(5)
-    print('Scanning target %s' % target)
-    scanid = zap.ascan.scan(target)
-    while int(zap.ascan.status(scanid)) < 100:
-        print('Scan progress %: ' + zap.ascan.status(scanid))
-        time.sleep(5)
-    print('Scan completed')
-    # Report the results
-    print('Hosts: ' + ', '.join(zap.core.hosts))
-    print('Alerts: ')
-    pprint(zap.core.alerts())
-
-
-if __name__ == '__main__':
-    test()
