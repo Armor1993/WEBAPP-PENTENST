@@ -147,12 +147,12 @@ def scan_form(scan_id=False):
                         print("entering nmap process creation")
                         Nmap.create_nmprocess(newscan.id)
                     elif request.form.get("zap", False):
-                        newscan.scan_type = "z"
+                        newscan.scan_type = "zap"
                         db.session.add(newscan)
                         db.session.commit()
                         Zap.create_process(newscan.id)
                     elif request.form.get("w3af", False):
-                        newscan.scan_type = "w"
+                        newscan.scan_type = "w3af"
                 if len(newscan.scan_type) == 0:
                     newscan.scan_type = None
             except Exception as ex:
@@ -168,25 +168,32 @@ def scan_form(scan_id=False):
 @login_required
 def scan_report(scan_id=False):
     if scan_id is False:
-        return redirect(url_for('scan/list'))
+        return redirect(url_for('scans'))
     else:
-        scan_obj = Scan.query.filterby(id=scan_id).first()
+        scan_obj = Scan.query.filter_by(id=scan_id).first()
         processes = Process.query.filter_by(scan_id=scan_id).all()
         if len(processes) > 1:
             # TODO
-            return redirect(url_for('scan/list'))
+            for process in processes:
+                if process.process != "zap":
+                    return redirect(url_for('scans'))
+                else:
+                    domain = Target.query.filter_by(id=scan_obj.target_id).first().domain
+                    outputs, critical, warning, info = Zap.get_zap_scan_outputs(processes[0].id)
+                    return render_template('zap_report.html', target=domain, critical=critical, warning=warning,
+                                           info=info,
+                                           alerts=outputs)
         else:
             if processes[0].process == "zap":
-                target_obj = Target.query.get(id=scan_obj.target_id)
-                domain = target_obj.domain
+                domain = Target.query.filter_by(id=scan_obj.target_id).first().domain
                 outputs, critical, warning, info = Zap.get_zap_scan_outputs(processes[0].id)
                 return render_template('zap_report.html', target=domain, critical=critical, warning=warning, info=info,
                                        alerts=outputs)
             elif processes[0].process == "nmap":
                 # TODO
-                return redirect(url_for('scan/list'))
+                return redirect(url_for('scans'))
             else:
-                return redirect(url_for('scan/list'))
+                return redirect(url_for('scans'))
 
 
 @app.route('/target/list')

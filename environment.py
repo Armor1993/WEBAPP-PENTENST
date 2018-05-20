@@ -65,7 +65,7 @@ class Scan(db.Model, Serializer):
     progress = db.Column(db.Integer, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     target_id = db.Column(db.Integer, db.ForeignKey('target.id'), nullable=False)
-    output = db.Column(db.Text, nullable=True)
+    output = db.Column(db.UnicodeText, nullable=True)
 
 
 class Target(db.Model, Serializer):
@@ -91,8 +91,19 @@ class Process(db.Model, Serializer):
     progress = db.Column(db.Integer, nullable=False, default=0)
     date_started = db.Column(db.DateTime, nullable=True)
     date_completed = db.Column(db.DateTime, nullable=True)
-    output = db.Column(db.Text, nullable=True)
+    output = db.Column(db.UnicodeText, nullable=True)
     command = db.Column(db.String(250), nullable=False)
+
+
+class ZapOutputs(db.Model, Serializer):
+    """
+    ZAP output table
+    """
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    scan_id = db.Column(db.Integer, db.ForeignKey('scan.id'))
+    pid = db.Column(db.Integer, db.ForeignKey('process.id'))
+    result_num = db.Column(db.Integer)
+    result = db.Column(db.TEXT, nullable=False)
 
 
 class ZapOutput:
@@ -108,4 +119,10 @@ class ZapOutput:
         self.parameter = params.get("param", None)
         self.reference = params.get("reference", None)
         self.risk = params.get("risk", None)
-        self.solution = params.get("risk", None)
+        self.solution = params.get("solution", None)
+        self.result_num = params.get("id", 0)
+        self.url = params.get("url", None)
+        self.description = params.get("description", None)
+        self.wascid = params.get("wascid", None)
+        self.cweid = params.get("cweid", None)
+        self.method = params.get("method", None)

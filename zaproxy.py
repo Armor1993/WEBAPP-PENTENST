@@ -2,7 +2,7 @@ import time
 from pprint import pprint
 from zapv2 import ZAPv2
 from environment import *
-
+import json
 apikey = '1tji9t090d0eak9gr84qv835c0'
 
 
@@ -58,6 +58,7 @@ class Zap:
         zap.urlopen(command)
         proc.status = 1
         proc.date_started = datetime.now().isoformat()
+        scan.date_started = datetime.now().isoformat()
         db.session.commit()
         time.sleep(2)
         scanid = zap.spider.scan(command)
@@ -78,35 +79,40 @@ class Zap:
             time.sleep(5)
         proc.status = 3
         scan.status = 3
-        proc.output = str(zap.core.alerts())
-        scan.output = str(zap.core.alerts())
+        zap_out = zap.core.alerts()
+        result_count = 0
+        for output in zap_out:
+            result_count += 1
+            new_result = ZapOutputs()
+            new_result.scan_id = scan.id
+            new_result.pid = pid
+            new_result.result = json.dumps(output)
+            new_result.result_num = result_count
+            db.session.add(new_result)
         proc.progress = 100
         scan.progress = 100
+        scan.date_completed = datetime.now().isoformat()
         db.session.commit()
 
     @staticmethod
     def get_zap_scan_outputs(scan_id):
-        zap_processes = []
+        # zap_processes = []
         all_ouputs = []
         critical = 0
         warning = 0
         info = 0
-        processes = Process.query.filter_by(scan_id=scan_id).all()
+        processes = ZapOutputs.query.filter_by(scan_id=scan_id).all()
         for process in processes:
-            if process.process == "zap":
-                zap_processes.append(process)
-        for process in zap_processes:
-            out_list = list(process.output)
-            for alert in out_list:
-                zap_obj = ZapOutput(alert)
-                all_ouputs.append(zap_obj)
-                if zap_obj.risk == "Low":
-                    critical += 1
-                elif zap_obj.risk == "Medium":
-                    warning += 1
-                elif zap_obj.risk == "High":
-                    info += 1
-
+            result = ZapOutput(json.loads(process.result))
+            result.result_num = process.id
+            # out_list = list(process.output)
+            if result.risk == "Low":
+                info += 1
+            elif result.risk == "Medium":
+                warning += 1
+            elif result.risk == "High":
+                critical += 1
+            all_ouputs.append(result)
         return all_ouputs, critical, warning, info
 
 
