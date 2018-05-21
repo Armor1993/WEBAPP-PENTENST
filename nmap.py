@@ -50,6 +50,7 @@ class Nmap:
         process.status = nm.state
         process.progress = nm.progress
         process.date_started = datetime.now().isoformat()
+        scan.date_started = datetime.now().isoformat()
         db.session.commit()
 
         if nm.has_failed():
