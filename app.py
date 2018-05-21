@@ -190,8 +190,10 @@ def scan_report(scan_id=False):
                 return render_template('zap_report.html', target=domain, critical=critical, warning=warning, info=info,
                                        alerts=outputs)
             elif processes[0].process == "nmap":
-                # TODO
-                return redirect(url_for('scans'))
+                domain = Target.query.filter_by(id=scan_obj.target_id).first().domain
+                open_ports, ip, os, all_ouputs = Nmap.get_nmap_results(scan_id)
+                return render_template('nmap_report.html', target=domain, ip=ip, os=os, num_ports=open_ports,
+                                       results=all_ouputs)
             else:
                 return redirect(url_for('scans'))
 

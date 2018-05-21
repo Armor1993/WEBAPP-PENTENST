@@ -6,6 +6,7 @@ from xml.etree.ElementTree import fromstring
 import json
 from environment import *
 
+
 # TODO operating system of the scanned machine
 
 
@@ -41,13 +42,9 @@ class Nmap:
         :return: None
         """
         process = Process.query.filter_by(id=pid).first()
-        print("PROCESS:" + str(process.__dict__))
         scan = Scan.query.filter_by(id=process.scan_id).first()
-        print("scan:" + str(scan.__dict__))
         target_obj = Target.query.filter_by(id=scan.target_id).first()
-        print("Target:" + str(target_obj.__dict__))
         target = target_obj.domain
-        print(target)
         nm = NmapProcess(targets=target, options="-sV -Pn -f --mtu 64 -p '*' -O")
         rc = nm.run_background()
         process.status = nm.state
@@ -63,10 +60,6 @@ class Nmap:
         while nm.is_running():
             print("Nmap Scan running: ETC: {0} DONE: {1}%".format(nm.etc,
                                                                   nm.progress))
-            print(scan.progress)
-            print(type(scan.progress))
-            print(nm.progress)
-            print(type(nm.progress))
             if int(scan.progress) < int(float(nm.progress)):
                 process.progress = int(float(nm.progress))
                 scan.progress = int(float(nm.progress))
@@ -83,9 +76,87 @@ class Nmap:
             process.status = 3
             scan.status = 3
             scan.progress = 100
-            process.output = json.dumps(cb.data(fromstring(str(nm.stdout))))
-            scan.output = json.dumps(cb.data(fromstring(str(nm.stdout))))
+            nmap_full_output = json.dumps(cb.data(fromstring(str(nm.stdout))))
+            nmap_output = Nmap.parse_nmap_output(nmap_full_output)
+            if nmap_output:
+                process.output = json.dumps(nmap_output)
+                scan.output = json.dumps(nmap_output)
+            else:
+                scan.output = None
         db.session.commit()
+
+    @staticmethod
+    def get_nmap_results(scan_id):
+        all_ouputs = []
+        open_ports = 0
+        ip = ""
+        os = ""
+        scans = Scan.query.filter_by(id=scan_id).all()
+        for process in scans:
+            if process.scan_type == "nmap":
+                output = json.loads(process.output)
+                ip = output.get("address")
+                os = output.get("os").get("name")
+                port_list = output.get("ports")
+                for port in port_list:
+                    open_ports += 1
+                    all_ouputs.append(NmapResult(port))
+        return open_ports, ip, os, all_ouputs
+
+    @staticmethod
+    def parse_nmap_output(nmap_full_output) -> list or None:
+        nmap_output = None
+        os = None
+        accuracy = 0
+        port_list = []
+        nmap_out_refining = json.loads(nmap_full_output).get("nmaprun").get("children")
+        for entry in nmap_out_refining:
+            if "host" in list(entry.keys()):
+                nmap_host_info_list = entry.get("host").get("children")
+                for dictionary in nmap_host_info_list:
+                    key_list = list(dictionary.keys())
+                    if "address" in key_list:
+                        address_data = dictionary.get("address").get("attributes").get("addr")
+                        port_data = dictionary.get("ports").get("children")
+                        os_data = dictionary.get("os").get("children")
+
+                        for port_dict in port_data:
+                            port_dict_keys = list(port_dict.keys())
+                            if "port" in port_dict_keys:
+                                port = port_dict.get("port").get("attributes")
+                                if port:
+                                    port_num = port.get("portid", None)
+                                    port_protocol = port.get("protocol", None)
+                                    children = port_dict.get("port").get("children")
+                                    for child in children:
+                                        child_keys = list(child.keys())
+                                        if "service" in child_keys:
+                                            service = child.get("service").get("attributes")
+                                            if service:
+                                                service_name = service.get("name", None)
+                                                service_product = service.get("product", None)
+                                            port_list.append(
+                                                {"port_num": port_num, "port_proto": port_protocol, "service": service_name,
+                                                 "product": service_product})
+                            else:
+                                pass
+
+                        for item in os_data:
+                            keys_list = list(item.keys())
+                            if "osmatch" in keys_list:
+                                print(item)
+                                new_accuracy = int(item.get("osmatch").get("attributes").get("accuracy"))
+                                if new_accuracy > accuracy:
+                                    accuracy = new_accuracy
+                                    os = item.get("osmatch").get("attributes").get("name")
+                                else:
+                                    pass
+                            else:
+                                pass
+
+                        nmap_output = {"address": address_data, "ports": port_list,
+                                       "os": {"name": os, "accuracy": accuracy}}
+        return nmap_output
 
 
 # DONT ADD THIS FUNCTION TO THE CALSS DIAGRAM

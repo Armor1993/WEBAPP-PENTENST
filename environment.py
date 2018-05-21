@@ -126,3 +126,13 @@ class ZapResult:
         self.wascid = params.get("wascid", None)
         self.cweid = params.get("cweid", None)
         self.method = params.get("method", None)
+
+
+class NmapResult:
+    def __init__(self, params=None):
+        if not params:
+            params = {}
+        self.port_num = params.get("port_num", None)
+        self.port_proto = params.get("port_proto", None)
+        self.port_service = params.get("service", None)
+        self.port_prtoduct = params.get("product", None)
